@@ -26,10 +26,25 @@
     }
 
     *{ box-sizing:border-box; }
-    body{ margin:0; font-family: Arial, sans-serif; background:var(--bg); color:var(--text); }
-    a{ color:inherit; }
 
-    .app{ height:100vh; display:flex; }
+    /* ✅ Viktig: full høyde */
+    html, body { height:100%; }
+
+    body{
+      margin:0;
+      font-family: Arial, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      overflow:hidden; /* hindrer rare scroll/height bugs */
+    }
+
+    .app{
+      height:100vh;
+      width:100vw;
+      display:flex;
+      overflow:hidden;
+    }
+
     .side{
       width:410px; min-width:320px; max-width:520px;
       border-right:1px solid var(--line);
@@ -37,7 +52,14 @@
       background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,0));
       overflow:auto;
     }
-    #map{ flex:1; background:#0b0f14; }
+
+    /* ✅ Viktig: map må ha eksplisitt høyde/bredde */
+    #map{
+      flex:1;
+      height:100vh;
+      width:100%;
+      background:#0b0f14;
+    }
 
     .topbar{
       display:flex; align-items:center; gap:10px;
@@ -56,7 +78,6 @@
     }
     .brand h1{ font-size:15px; margin:0; font-weight:700; }
     .brand .sub{ font-size:12px; opacity:.75; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:210px; }
-
     .spacer{ flex:1; }
 
     .btn{
@@ -145,10 +166,7 @@
     .card .desc{ margin-top:6px; font-size:12px; color: var(--muted); line-height:1.35; }
     .thumb{ width:100%; border-radius: 12px; margin-top:8px; display:block; border:1px solid var(--line); }
 
-    /* ===== MODAL/OVERLAY FIX =====
-       Overlay skal ikke stoppe klikk på kartet.
-       Modal skal fortsatt være klikkbar.
-    */
+    /* ✅ Modal overlay: lar kart-klikk gå gjennom */
     .overlay{
       position:fixed; inset:0;
       background: rgba(0,0,0,.55);
@@ -156,9 +174,9 @@
       align-items:center; justify-content:center;
       padding:18px;
       z-index:2000;
-      pointer-events:none;      /* <- lar klikk gå gjennom til kart */
+      pointer-events:none;
     }
-    .modal{ pointer-events:auto; } /* <- modalen kan klikkes */
+    .modal{ pointer-events:auto; }
 
     .modal{
       width:min(820px, 98vw);
@@ -192,10 +210,7 @@
       background:#0c1320;
       height: 40px;
     }
-    .star{
-      font-size:18px; cursor:pointer; user-select:none;
-      opacity:.45;
-    }
+    .star{ font-size:18px; cursor:pointer; user-select:none; opacity:.45; }
     .star.on{ opacity:1; }
     .starVal{ font-size:12px; color: var(--muted); margin-left:8px; }
 
@@ -232,7 +247,6 @@
     .payBox h3{ margin:0 0 8px; font-size:14px; }
     .price{ font-size:26px; font-weight:900; margin: 6px 0 6px; }
     .fine{ font-size:12px; color:var(--muted2); line-height:1.4; }
-    .payActions{ display:flex; gap:10px; margin-top:12px; flex-wrap:wrap; }
     .sep{ height:1px; background: rgba(255,255,255,.10); margin: 12px 0; }
     .note{ font-size:12px; color:var(--muted2); margin-top:10px; }
 
@@ -243,15 +257,11 @@
       .payCard{ grid-template-columns: 1fr; }
       .payRight{ border-left:none; border-top:1px solid rgba(255,255,255,.10); }
     }
-
-    .leaflet-popup-content-wrapper{ border-radius:14px; }
-    .leaflet-popup-content{ margin: 10px 12px; }
   </style>
 </head>
 
 <body>
 
-<!-- PAYWALL (demo) -->
 <div id="paywall" class="paywall">
   <div class="payCard">
     <div class="payLeft">
@@ -263,15 +273,12 @@
         </div>
       </div>
 
-      <h2 class="payTitle">Lås opp kartet og fellesskapet</h2>
-      <div class="paySub">
-        Demo-paywall. Klikk for å gå inn. (Ekte betalingsmur krever innlogging + abonnement på server.)
-      </div>
-
+      <h2 class="payTitle">Lås opp kartet (demo)</h2>
+      <div class="paySub">Velg modus for å gå inn.</div>
       <ul class="payBullets">
         <li>Legg inn steder med bilde, tips og ⭐ vurdering</li>
-        <li>Se “Admin valg” og fellesskapets anbefalinger</li>
-        <li>Filter på kategorier og se markører på kartet</li>
+        <li>Filter på kategorier</li>
+        <li>Alle ser de samme anbefalingene (i demo forsvinner nye steder ved refresh)</li>
       </ul>
     </div>
 
@@ -279,9 +286,7 @@
       <div class="payBox">
         <h3>Abonnement</h3>
         <div class="price">79 kr / mnd</div>
-        <div class="fine">
-          (Demo) Velg modus:
-        </div>
+        <div class="fine">(Demo) Klikk for å gå inn.</div>
 
         <div class="sep"></div>
 
@@ -290,13 +295,12 @@
           <button class="btn primary" id="enterAsUserBtn">Fortsett som Bruker</button>
         </div>
 
-        <div class="note">Admin kan merke “Admin valg” på nye steder i demoen.</div>
+        <div class="note">Admin kan merke “Admin valg”.</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- APP -->
 <div class="app" id="app" style="display:none;">
   <aside class="side">
     <div class="topbar">
@@ -310,13 +314,13 @@
 
       <div class="spacer"></div>
 
-      <span class="pill" title="Demo admin-modus">
+      <span class="pill">
         <span id="adminDot" class="dot"></span>
         <span><strong id="modeLabel">Bruker</strong></span>
       </span>
 
       <button class="btn primary" id="addBtn">+ Legg til</button>
-      <button class="btn ghost" id="lockBtn" title="Tilbake til paywall">Lås</button>
+      <button class="btn ghost" id="lockBtn">Lås</button>
     </div>
 
     <div class="controls">
@@ -335,7 +339,7 @@
       </div>
 
       <div class="toggles">
-        <label class="toggle" title="Vis bare admin sine anbefalinger">
+        <label class="toggle">
           <input type="checkbox" id="onlyAdmin" />
           <strong>Kun Admin valg</strong>
         </label>
@@ -351,7 +355,6 @@
   <div id="map"></div>
 </div>
 
-<!-- MODAL -->
 <div class="overlay" id="overlay">
   <div class="modal">
     <div class="modalHeader">
@@ -366,7 +369,7 @@
     <div class="modalBody">
       <div class="grid">
         <div>
-          <div class="label">Navn på destinasjon *</div>
+          <div class="label">Navn *</div>
           <input id="f_name" placeholder="F.eks. Preikestolen" />
         </div>
 
@@ -377,7 +380,7 @@
 
         <div class="full">
           <div class="label">Beskrivelse *</div>
-          <textarea id="f_desc" placeholder="Beskriv destinasjonen og hva som gjør den spesiell..."></textarea>
+          <textarea id="f_desc" placeholder="Beskriv destinasjonen..."></textarea>
         </div>
 
         <div>
@@ -405,7 +408,7 @@
         </div>
 
         <div>
-          <div class="label">Vurdering (1–5 stjerner)</div>
+          <div class="label">Vurdering</div>
           <div class="stars" id="stars">
             <span class="star" data-v="1">★</span>
             <span class="star" data-v="2">★</span>
@@ -419,17 +422,17 @@
         <div>
           <div class="label">Bilde (valgfritt)</div>
           <input type="file" id="f_file" accept="image/*" />
-          <div class="help">Opplasting er lokal preview i demoen. Bruk bilde-URL for deling.</div>
+          <div class="help">Opplasting er lokal preview i demoen.</div>
         </div>
 
         <div class="full">
-          <div class="label">…eller lim inn bilde-URL (valgfritt)</div>
+          <div class="label">Bilde-URL (valgfritt)</div>
           <input id="f_img" placeholder="https://..." />
         </div>
 
         <div class="full">
           <div class="label">Tips (valgfritt)</div>
-          <textarea id="f_tips" placeholder="Parkering, beste tidspunkt å besøke, hva man bør ha med..."></textarea>
+          <textarea id="f_tips" placeholder="Parkering, beste tidspunkt, osv."></textarea>
         </div>
 
         <div class="full" id="adminPickWrap" style="display:none;">
@@ -442,10 +445,11 @@
         <div class="full">
           <div class="row">
             <button class="btn" id="cancelAdd">Avbryt</button>
-            <button class="btn primary" id="saveAdd">Lagre destinasjon</button>
+            <button class="btn primary" id="saveAdd">Lagre</button>
           </div>
           <div class="help" id="saveHelp"></div>
         </div>
+
       </div>
     </div>
   </div>
@@ -453,7 +457,6 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  // ===== Demo state =====
   let isUnlocked = false;
   let isAdmin = false;
 
@@ -521,7 +524,7 @@
       .replaceAll("'","&#039;");
   }
 
-  // ===== Paywall controls =====
+  // Paywall
   const paywallEl = document.getElementById("paywall");
   const appEl = document.getElementById("app");
   const adminDot = document.getElementById("adminDot");
@@ -536,6 +539,36 @@
     appEl.style.display = "none";
   };
 
+  // Map
+  const map = L.map("map", { zoomControl:true }).setView([59.20, 10.25], 5);
+
+  const tileStatus = document.getElementById("tileStatus");
+  function addTiles(url, label){
+    const layer = L.tileLayer(url, { attribution:"© OpenStreetMap" });
+    layer.addTo(map);
+    tileStatus.textContent = `Kartkilde: ${label}`;
+    tileStatus.style.color = "rgba(231,238,248,.75)";
+
+    let err = 0;
+    layer.on("tileerror", () => {
+      err++;
+      if(err >= 3){
+        map.removeLayer(layer);
+        tileStatus.textContent = "Kartfliser feilet – bytter kartkilde…";
+        tileStatus.style.color = "#ffd18a";
+        addTiles("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", "OSM Standard");
+      }
+    });
+  }
+  addTiles("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", "OSM HOT");
+
+  // ✅ Viktig: tving Leaflet til å beregne størrelse riktig
+  function forceMapResize(){
+    setTimeout(() => {
+      map.invalidateSize(true);
+    }, 60);
+  }
+
   function unlock(admin){
     isUnlocked = true;
     isAdmin = admin;
@@ -544,38 +577,14 @@
     adminDot.classList.toggle("on", isAdmin);
     modeLabel.textContent = isAdmin ? "Admin" : "Bruker";
     adminPickWrap.style.display = isAdmin ? "block" : "none";
+
+    forceMapResize();
     render();
   }
 
-  // ===== Leaflet map =====
-  const map = L.map("map").setView([59.20, 10.25], 9);
+  window.addEventListener("resize", forceMapResize);
 
-  // Use HOT tiles first (often less blocked) + fallback
-  const tileStatus = document.getElementById("tileStatus");
-
-  function addTiles(url, label){
-    const layer = L.tileLayer(url, { attribution: "© OpenStreetMap" });
-    layer.addTo(map);
-
-    // show status
-    tileStatus.textContent = `Kartkilde: ${label}`;
-    tileStatus.style.color = "rgba(231,238,248,.75)";
-
-    // detect tile errors and fallback
-    let errorCount = 0;
-    layer.on("tileerror", () => {
-      errorCount++;
-      if(errorCount >= 3){
-        // Switch to fallback only once
-        map.removeLayer(layer);
-        tileStatus.textContent = "Kartfliser ble blokkert/feilet – bytter kartkilde…";
-        tileStatus.style.color = "#ffd18a";
-        addTiles("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", "OSM Standard");
-      }
-    });
-  }
-  addTiles("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", "OSM HOT");
-
+  // Markers
   const markers = new Map();
   function popupHtml(d){
     const img = d.image_url ? `<img class="thumb" src="${d.image_url}" alt="">` : "";
@@ -596,7 +605,6 @@
       </div>
     `;
   }
-
   function ensureMarker(d){
     if(markers.has(d.id)) return markers.get(d.id);
     const m = L.marker([d.lat, d.lon]).addTo(map).bindPopup(popupHtml(d));
@@ -608,7 +616,7 @@
     markers.clear();
   }
 
-  // ===== Filters/UI =====
+  // UI filters
   const chipsEl = document.getElementById("chips");
   const listEl = document.getElementById("list");
   const qEl = document.getElementById("q");
@@ -642,13 +650,11 @@
     const q = qEl.value.trim().toLowerCase();
     const cat = catEl.value;
     const onlyAdmin = onlyAdminEl.checked;
-
     return steder.filter(d => {
       const text = `${d.title} ${d.description} ${d.tips||""} ${d.place_name||""}`.toLowerCase();
-      const okQ = !q || text.includes(q);
-      const okCat = !cat || d.category === cat;
-      const okAdmin = !onlyAdmin || d.is_admin_pick;
-      return okQ && okCat && okAdmin;
+      return (!q || text.includes(q)) &&
+             (!cat || d.category===cat) &&
+             (!onlyAdmin || d.is_admin_pick);
     });
   }
 
@@ -661,10 +667,10 @@
     clearMarkers();
     items.forEach(d => ensureMarker(d));
 
-    // Fit to visible items
-    if(items.length){
-      const bounds = L.latLngBounds(items.map(d => [d.lat, d.lon]));
-      map.fitBounds(bounds.pad(0.15));
+    // Ikke fitBounds aggressivt - behold zoom du setter selv
+    // Men hvis ingen view ennå, zoom til Norge-ish:
+    if(!items.length){
+      map.setView([64.5, 11.0], 4);
     }
 
     listEl.innerHTML = "";
@@ -694,9 +700,11 @@
     if(!items.length){
       listEl.innerHTML = `<div style="opacity:.75;padding:8px;">Ingen treff.</div>`;
     }
+
+    forceMapResize();
   }
 
-  // ===== Add flow (modal) =====
+  // Add modal
   const overlay = document.getElementById("overlay");
   const addBtn = document.getElementById("addBtn");
   const closeModalBtn = document.getElementById("closeModal");
@@ -722,7 +730,6 @@
 
   const stars = Array.from(document.querySelectorAll(".star"));
   const starValEl = document.getElementById("starVal");
-
   function setRating(v){
     ratingVal = v;
     stars.forEach(s => s.classList.toggle("on", Number(s.dataset.v) <= v));
@@ -734,12 +741,14 @@
   function openModal(){
     overlay.style.display = "flex";
     saveHelp.textContent = "";
+    forceMapResize();
   }
   function closeModal(){
     overlay.style.display = "none";
     pendingLatLng = null;
     if(tempPin){ map.removeLayer(tempPin); tempPin = null; }
     if(fileObjectUrl){ URL.revokeObjectURL(fileObjectUrl); fileObjectUrl=""; }
+    forceMapResize();
   }
 
   addBtn.onclick = () => {
@@ -762,7 +771,6 @@
   closeModalBtn.onclick = closeModal;
   cancelAddBtn.onclick = closeModal;
 
-  // IMPORTANT: With pointer-events fix, map click works even when modal open
   map.on("click", (e) => {
     if(overlay.style.display !== "flex") return;
     pendingLatLng = e.latlng;
@@ -791,7 +799,7 @@
     }
     if(!f_name.value.trim()){
       saveHelp.style.color = "#ffd18a";
-      saveHelp.textContent = "Navn på destinasjon er påkrevd.";
+      saveHelp.textContent = "Navn er påkrevd.";
       return;
     }
     if(!f_desc.value.trim()){
@@ -823,8 +831,6 @@
     map.setView([d.lat, d.lon], 15);
     m.openPopup();
   };
-
-  // Start locked
 </script>
 </body>
 </html>
