@@ -1,1 +1,54 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="utf-8">
+  <title>Destinasjoner</title>
+
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; }
+    #map { height: 100vh; }
+    img { max-width: 100%; border-radius: 6px; margin-top: 6px; }
+  </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+  const map = L.map('map').setView([60.3971, 5.3249], 13);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  const steder = [
+    {
+      navn: "Bryggen",
+      beskrivelse: "Historisk havnefront med fargerike trehus",
+      bilde: "https://commons.wikimedia.org/wiki/Special:FilePath/Bryggen%20Bergen.jpg",
+      tips: "Best tidlig morgen eller kveld",
+      lat: 60.3971,
+      lon: 5.3249
+    }
+  ];
+
+  steder.forEach(s => {
+    L.marker([s.lat, s.lon]).addTo(map)
+      .bindPopup(`
+        <strong>${s.navn}</strong><br>
+        ${s.beskrivelse}<br>
+        <img src="${s.bilde}">
+        <em>${s.tips}</em>
+      `);
+  });
+</script>
+
+</body>
+</html>
 
