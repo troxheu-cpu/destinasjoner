@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Norge Reise – Destinasjoner</title>
+  <title>Oppdag Norge – Destinasjoner</title>
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
@@ -29,7 +29,6 @@
     body{ margin:0; font-family: Arial, sans-serif; background:var(--bg); color:var(--text); }
     a{ color:inherit; }
 
-    /* Layout */
     .app{ height:100vh; display:flex; }
     .side{
       width:410px; min-width:320px; max-width:520px;
@@ -38,9 +37,8 @@
       background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,0));
       overflow:auto;
     }
-    #map{ flex:1; }
+    #map{ flex:1; background:#0b0f14; }
 
-    /* Top bar */
     .topbar{
       display:flex; align-items:center; gap:10px;
       padding:10px 12px;
@@ -49,17 +47,16 @@
       background: rgba(255,255,255,.02);
       box-shadow: var(--shadow);
     }
-    .brand{
-      display:flex; align-items:center; gap:10px;
-      min-width:0;
-    }
+    .brand{ display:flex; align-items:center; gap:10px; min-width:0; }
     .logo{
       width:34px; height:34px; border-radius:10px;
       background: radial-gradient(circle at 30% 30%, rgba(34,197,94,.9), rgba(34,197,94,.25));
       border:1px solid rgba(34,197,94,.35);
+      flex:0 0 auto;
     }
     .brand h1{ font-size:15px; margin:0; font-weight:700; }
     .brand .sub{ font-size:12px; opacity:.75; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:210px; }
+
     .spacer{ flex:1; }
 
     .btn{
@@ -73,7 +70,6 @@
     .btn.primary:hover{ border-color: rgba(34,197,94,.6); }
     .btn.warn{ background: rgba(245,158,11,.12); border-color: rgba(245,158,11,.35); }
     .btn.ghost{ background: transparent; }
-    .btn.small{ padding:7px 9px; border-radius:10px; }
 
     .pill{
       display:inline-flex; align-items:center; gap:6px;
@@ -86,10 +82,10 @@
     .dot{ width:8px; height:8px; border-radius:999px; background: var(--bad); }
     .dot.on{ background: var(--ok); }
 
-    /* Controls */
     .controls{ margin-top:12px; border:1px solid var(--line); border-radius: var(--radius); background: var(--panel); padding:12px; }
     .row{ display:flex; gap:8px; }
     .row + .row{ margin-top:8px; }
+
     input, select, textarea{
       width:100%;
       padding:10px 10px;
@@ -115,7 +111,6 @@
       user-select:none;
     }
     .chip.active{ border-color: rgba(34,197,94,.65); background: rgba(34,197,94,.12); }
-    .chip.muted{ opacity:.85; }
 
     .toggles{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
     .toggle{
@@ -130,7 +125,6 @@
     .toggle input{ width:auto; }
     .toggle strong{ color:var(--text); font-weight:700; }
 
-    /* List */
     .list{ margin-top:12px; display:flex; flex-direction:column; gap:10px; }
     .card{
       padding:10px; border-radius: 16px;
@@ -151,7 +145,10 @@
     .card .desc{ margin-top:6px; font-size:12px; color: var(--muted); line-height:1.35; }
     .thumb{ width:100%; border-radius: 12px; margin-top:8px; display:block; border:1px solid var(--line); }
 
-    /* Modal */
+    /* ===== MODAL/OVERLAY FIX =====
+       Overlay skal ikke stoppe klikk på kartet.
+       Modal skal fortsatt være klikkbar.
+    */
     .overlay{
       position:fixed; inset:0;
       background: rgba(0,0,0,.55);
@@ -159,7 +156,10 @@
       align-items:center; justify-content:center;
       padding:18px;
       z-index:2000;
+      pointer-events:none;      /* <- lar klikk gå gjennom til kart */
     }
+    .modal{ pointer-events:auto; } /* <- modalen kan klikkes */
+
     .modal{
       width:min(820px, 98vw);
       max-height: 92vh;
@@ -180,15 +180,11 @@
     .modalHeader h2{ margin:0; font-size:14px; font-weight:900; }
     .modalHeader .small{ font-size:12px; color: var(--muted); }
     .modalBody{ padding:14px; }
-    .grid{
-      display:grid; grid-template-columns: 1fr 1fr;
-      gap:10px;
-    }
+    .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
     .grid .full{ grid-column: 1 / -1; }
     .label{ font-size:12px; color: var(--muted); margin: 2px 0 6px; }
     .help{ font-size:12px; color: var(--muted2); margin-top:6px; }
 
-    /* Stars */
     .stars{
       display:flex; gap:6px; align-items:center;
       padding:8px 10px; border-radius:12px;
@@ -203,7 +199,6 @@
     .star.on{ opacity:1; }
     .starVal{ font-size:12px; color: var(--muted); margin-left:8px; }
 
-    /* Paywall screen */
     .paywall{
       position:fixed; inset:0; z-index:3000;
       background: radial-gradient(circle at 25% 10%, rgba(34,197,94,.18), rgba(0,0,0,0) 45%),
@@ -249,7 +244,6 @@
       .payRight{ border-left:none; border-top:1px solid rgba(255,255,255,.10); }
     }
 
-    /* Leaflet popup a bit nicer */
     .leaflet-popup-content-wrapper{ border-radius:14px; }
     .leaflet-popup-content{ margin: 10px 12px; }
   </style>
@@ -257,7 +251,7 @@
 
 <body>
 
-<!-- PAYWALL (frontend-demo) -->
+<!-- PAYWALL (demo) -->
 <div id="paywall" class="paywall">
   <div class="payCard">
     <div class="payLeft">
@@ -271,19 +265,14 @@
 
       <h2 class="payTitle">Lås opp kartet og fellesskapet</h2>
       <div class="paySub">
-        Få tilgang til et kart der du kan <strong>legge til dine egne destinasjoner</strong>,
-        se <strong>andres anbefalinger</strong>, filtrere på kategorier og lagre tips.
+        Demo-paywall. Klikk for å gå inn. (Ekte betalingsmur krever innlogging + abonnement på server.)
       </div>
 
       <ul class="payBullets">
         <li>Legg inn steder med bilde, tips og ⭐ vurdering</li>
         <li>Se “Admin valg” og fellesskapets anbefalinger</li>
-        <li>Filter på natur / kultur / utsikt / mat / overnatting osv.</li>
+        <li>Filter på kategorier og se markører på kartet</li>
       </ul>
-
-      <div class="note">
-        <strong>Merk:</strong> Dette er en frontend-demo av betalingsmur. For ekte betalingsmur må vi koble til innlogging + abonnement (Supabase + Stripe/Vipps).
-      </div>
     </div>
 
     <div class="payRight">
@@ -291,13 +280,11 @@
         <h3>Abonnement</h3>
         <div class="price">79 kr / mnd</div>
         <div class="fine">
-          (Demo) Klikk “Fortsett” for å gå inn. Når du vil gjøre dette ekte,
-          kobler vi til Vipps/Stripe og lagrer abonnementsstatus.
+          (Demo) Velg modus:
         </div>
 
         <div class="sep"></div>
 
-        <div style="font-size:12px; color:var(--muted); margin-bottom:6px;">Velg modus (demo)</div>
         <div class="row">
           <button class="btn warn" id="enterAsAdminBtn">Fortsett som Admin</button>
           <button class="btn primary" id="enterAsUserBtn">Fortsett som Bruker</button>
@@ -317,7 +304,7 @@
         <div class="logo"></div>
         <div style="min-width:0">
           <h1>Oppdag Norge</h1>
-          <div class="sub" id="subtitle">Utforsk og del de beste reisemålene</div>
+          <div class="sub">Utforsk og del de beste reisemålene</div>
         </div>
       </div>
 
@@ -355,6 +342,7 @@
       </div>
 
       <div class="chips" id="chips"></div>
+      <div class="help" id="tileStatus" style="margin-top:10px;"></div>
     </div>
 
     <div class="list" id="list"></div>
@@ -363,12 +351,12 @@
   <div id="map"></div>
 </div>
 
-<!-- MODAL: ADD DESTINATION -->
+<!-- MODAL -->
 <div class="overlay" id="overlay">
   <div class="modal">
     <div class="modalHeader">
       <div>
-        <h2 id="modalTitle">Legg til ny destinasjon</h2>
+        <h2>Legg til ny destinasjon</h2>
         <div class="small" id="modalCoord">Klikk på kartet for å velge plassering</div>
       </div>
       <div class="spacer"></div>
@@ -426,13 +414,12 @@
             <span class="star" data-v="5">★</span>
             <span class="starVal" id="starVal">Ikke valgt</span>
           </div>
-          <div class="help">Klikk på en stjerne for å sette vurdering.</div>
         </div>
 
         <div>
-          <div class="label">Bilde</div>
+          <div class="label">Bilde (valgfritt)</div>
           <input type="file" id="f_file" accept="image/*" />
-          <div class="help">Opplasting her er kun lokal preview i demoen. For ekte lagring må vi bruke f.eks. Supabase Storage.</div>
+          <div class="help">Opplasting er lokal preview i demoen. Bruk bilde-URL for deling.</div>
         </div>
 
         <div class="full">
@@ -441,8 +428,8 @@
         </div>
 
         <div class="full">
-          <div class="label">Tips for besøkende (valgfritt)</div>
-          <textarea id="f_tips" placeholder="Nyttige tips som parkering, beste tidspunkt å besøke, hva man bør ha med..."></textarea>
+          <div class="label">Tips (valgfritt)</div>
+          <textarea id="f_tips" placeholder="Parkering, beste tidspunkt å besøke, hva man bør ha med..."></textarea>
         </div>
 
         <div class="full" id="adminPickWrap" style="display:none;">
@@ -450,7 +437,6 @@
             <input type="checkbox" id="f_adminpick" />
             <strong>Merk som “Admin valg”</strong>
           </label>
-          <div class="help">Synlig for alle. (I ekte versjon krever dette admin-rolle.)</div>
         </div>
 
         <div class="full">
@@ -467,14 +453,10 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  // ===============================
-  // Demo-state (bytt til ekte backend senere)
-  // ===============================
+  // ===== Demo state =====
   let isUnlocked = false;
   let isAdmin = false;
 
-  // Destinasjoner: alle ser alle (community)
-  // NB: I demo ligger dette i minne. Ved refresh forsvinner nye steder.
   const steder = [
     {
       id: crypto.randomUUID(),
@@ -488,8 +470,7 @@
       tips: "Best tidlig morgen eller kveld.",
       lat: 60.3971,
       lon: 5.3249,
-      is_admin_pick: true,
-      created_by: "admin"
+      is_admin_pick: true
     },
     {
       id: crypto.randomUUID(),
@@ -503,8 +484,7 @@
       tips: "Fin kveldstur med solnedgang.",
       lat: 59.1346,
       lon: 10.2169,
-      is_admin_pick: false,
-      created_by: "user"
+      is_admin_pick: false
     }
   ];
 
@@ -527,17 +507,21 @@
       "vinter":"Vinter"
     }[v] || v);
   }
-
   function starsText(n){
     if(!n) return "";
-    const full = "★★★★★".slice(0, Math.round(n));
-    const empty = "☆☆☆☆☆".slice(0, 5 - Math.round(n));
-    return full + empty;
+    const r = Math.round(n);
+    return "★★★★★".slice(0,r) + "☆☆☆☆☆".slice(0,5-r);
+  }
+  function escapeHtml(str){
+    return String(str ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
   }
 
-  // ===============================
-  // Paywall demo controls
-  // ===============================
+  // ===== Paywall controls =====
   const paywallEl = document.getElementById("paywall");
   const appEl = document.getElementById("app");
   const adminDot = document.getElementById("adminDot");
@@ -546,7 +530,6 @@
 
   document.getElementById("enterAsAdminBtn").onclick = () => unlock(true);
   document.getElementById("enterAsUserBtn").onclick = () => unlock(false);
-
   document.getElementById("lockBtn").onclick = () => {
     isUnlocked = false;
     paywallEl.style.display = "flex";
@@ -561,83 +544,91 @@
     adminDot.classList.toggle("on", isAdmin);
     modeLabel.textContent = isAdmin ? "Admin" : "Bruker";
     adminPickWrap.style.display = isAdmin ? "block" : "none";
-    render(); // refresh list
+    render();
   }
 
-  // ===============================
-  // Leaflet map
-  // ===============================
-  const map = L.map('map').setView([59.20, 10.25], 9);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap'
-  }).addTo(map);
+  // ===== Leaflet map =====
+  const map = L.map("map").setView([59.20, 10.25], 9);
 
-  // Markers indexed by destination id
+  // Use HOT tiles first (often less blocked) + fallback
+  const tileStatus = document.getElementById("tileStatus");
+
+  function addTiles(url, label){
+    const layer = L.tileLayer(url, { attribution: "© OpenStreetMap" });
+    layer.addTo(map);
+
+    // show status
+    tileStatus.textContent = `Kartkilde: ${label}`;
+    tileStatus.style.color = "rgba(231,238,248,.75)";
+
+    // detect tile errors and fallback
+    let errorCount = 0;
+    layer.on("tileerror", () => {
+      errorCount++;
+      if(errorCount >= 3){
+        // Switch to fallback only once
+        map.removeLayer(layer);
+        tileStatus.textContent = "Kartfliser ble blokkert/feilet – bytter kartkilde…";
+        tileStatus.style.color = "#ffd18a";
+        addTiles("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", "OSM Standard");
+      }
+    });
+  }
+  addTiles("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", "OSM HOT");
+
   const markers = new Map();
-
   function popupHtml(d){
     const img = d.image_url ? `<img class="thumb" src="${d.image_url}" alt="">` : "";
-    const rating = d.rating ? ` <span style="color:#ffd18a; font-weight:800;">${starsText(d.rating)}</span> <span style="opacity:.7">(${d.rating}/5)</span>` : "";
+    const rating = d.rating ? ` <span style="color:#ffd18a;font-weight:900">${starsText(d.rating)}</span> <span style="opacity:.7">(${d.rating}/5)</span>` : "";
     const admin = d.is_admin_pick ? `<span class="badge admin">Admin valg</span>` : "";
-    const meta = `
-      <div style="margin-top:6px; display:flex; flex-wrap:wrap; gap:6px;">
-        ${admin}
-        <span class="badge">${d.category}</span>
-        <span class="badge">${seasonLabel(d.season)}</span>
-        ${d.place_name ? `<span class="badge">${d.place_name}</span>` : ``}
-      </div>
-    `;
-
     return `
       <div style="max-width:320px">
-        <div style="font-weight:900; font-size:14px;">${escapeHtml(d.title)}${rating}</div>
-        <div style="margin-top:6px; opacity:.88; line-height:1.35;">${escapeHtml(d.description)}</div>
-        ${meta}
+        <div style="font-weight:900;font-size:14px">${escapeHtml(d.title)}${rating}</div>
+        <div style="margin-top:6px;opacity:.88;line-height:1.35">${escapeHtml(d.description)}</div>
+        <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px">
+          ${admin}
+          <span class="badge">${escapeHtml(d.category)}</span>
+          <span class="badge">${escapeHtml(seasonLabel(d.season))}</span>
+          ${d.place_name ? `<span class="badge">${escapeHtml(d.place_name)}</span>` : ``}
+        </div>
         ${img}
-        ${d.tips ? `<div style="margin-top:8px; opacity:.9;"><em>${escapeHtml(d.tips)}</em></div>` : ``}
+        ${d.tips ? `<div style="margin-top:8px;opacity:.9"><em>${escapeHtml(d.tips)}</em></div>` : ``}
       </div>
     `;
   }
 
   function ensureMarker(d){
     if(markers.has(d.id)) return markers.get(d.id);
-
     const m = L.marker([d.lat, d.lon]).addTo(map).bindPopup(popupHtml(d));
     markers.set(d.id, m);
     return m;
   }
-
   function clearMarkers(){
-    for (const [id, m] of markers.entries()){
-      map.removeLayer(m);
-    }
+    for(const m of markers.values()) map.removeLayer(m);
     markers.clear();
   }
 
-  // ===============================
-  // UI: chips, list, filters
-  // ===============================
+  // ===== Filters/UI =====
   const chipsEl = document.getElementById("chips");
   const listEl = document.getElementById("list");
   const qEl = document.getElementById("q");
   const catEl = document.getElementById("cat");
   const onlyAdminEl = document.getElementById("onlyAdmin");
 
-  // Make chips
-  let activeChip = ""; // category key or ""
+  let activeChip = "";
   function renderChips(){
     chipsEl.innerHTML = "";
-    const allChip = document.createElement("div");
-    allChip.className = "chip " + (activeChip === "" ? "active" : "");
-    allChip.textContent = "Alle";
-    allChip.onclick = () => { activeChip = ""; catEl.value=""; render(); };
-    chipsEl.appendChild(allChip);
+    const all = document.createElement("div");
+    all.className = "chip " + (activeChip==="" ? "active" : "");
+    all.textContent = "Alle";
+    all.onclick = () => { activeChip=""; catEl.value=""; render(); };
+    chipsEl.appendChild(all);
 
-    for (const c of CATEGORIES){
+    for(const c of CATEGORIES){
       const el = document.createElement("div");
-      el.className = "chip " + (activeChip === c.key ? "active" : "");
+      el.className = "chip " + (activeChip===c.key ? "active" : "");
       el.textContent = c.label;
-      el.onclick = () => { activeChip = c.key; catEl.value=c.key; render(); };
+      el.onclick = () => { activeChip=c.key; catEl.value=c.key; render(); };
       chipsEl.appendChild(el);
     }
   }
@@ -647,7 +638,7 @@
   catEl.addEventListener("change", () => { activeChip = catEl.value; render(); });
   onlyAdminEl.addEventListener("change", render);
 
-  function filteredDestinations(){
+  function filtered(){
     const q = qEl.value.trim().toLowerCase();
     const cat = catEl.value;
     const onlyAdmin = onlyAdminEl.checked;
@@ -665,22 +656,19 @@
     if(!isUnlocked) return;
 
     renderChips();
+    const items = filtered();
 
-    const items = filteredDestinations();
-
-    // Rebuild markers based on filter (so only matching are shown)
     clearMarkers();
-    for (const d of items) ensureMarker(d);
+    items.forEach(d => ensureMarker(d));
 
-    // Fit bounds if list not empty
-    if(items.length > 0){
+    // Fit to visible items
+    if(items.length){
       const bounds = L.latLngBounds(items.map(d => [d.lat, d.lon]));
       map.fitBounds(bounds.pad(0.15));
     }
 
-    // List
     listEl.innerHTML = "";
-    for (const d of items){
+    items.forEach(d => {
       const card = document.createElement("div");
       card.className = "card";
       card.innerHTML = `
@@ -701,16 +689,14 @@
         m.openPopup();
       };
       listEl.appendChild(card);
-    }
+    });
 
-    if(items.length === 0){
-      listEl.innerHTML = `<div style="opacity:.75; padding:8px;">Ingen treff.</div>`;
+    if(!items.length){
+      listEl.innerHTML = `<div style="opacity:.75;padding:8px;">Ingen treff.</div>`;
     }
   }
 
-  // ===============================
-  // Add destination flow
-  // ===============================
+  // ===== Add flow (modal) =====
   const overlay = document.getElementById("overlay");
   const addBtn = document.getElementById("addBtn");
   const closeModalBtn = document.getElementById("closeModal");
@@ -732,8 +718,8 @@
   let pendingLatLng = null;
   let tempPin = null;
   let ratingVal = null;
+  let fileObjectUrl = "";
 
-  // Star UI
   const stars = Array.from(document.querySelectorAll(".star"));
   const starValEl = document.getElementById("starVal");
 
@@ -753,10 +739,10 @@
     overlay.style.display = "none";
     pendingLatLng = null;
     if(tempPin){ map.removeLayer(tempPin); tempPin = null; }
+    if(fileObjectUrl){ URL.revokeObjectURL(fileObjectUrl); fileObjectUrl=""; }
   }
 
   addBtn.onclick = () => {
-    // reset fields
     f_name.value = "";
     f_place.value = "";
     f_desc.value = "";
@@ -767,6 +753,7 @@
     f_file.value = "";
     if(isAdmin) f_adminpick.checked = false;
     setRating(null);
+
     pendingLatLng = null;
     modalCoord.textContent = "Klikk på kartet for å velge plassering";
     openModal();
@@ -775,24 +762,21 @@
   closeModalBtn.onclick = closeModal;
   cancelAddBtn.onclick = closeModal;
 
-  // When modal open, user clicks map to choose location
+  // IMPORTANT: With pointer-events fix, map click works even when modal open
   map.on("click", (e) => {
-    if(overlay.style.display !== "flex") return; // only when modal open
+    if(overlay.style.display !== "flex") return;
     pendingLatLng = e.latlng;
     modalCoord.textContent = `Valgt posisjon: ${pendingLatLng.lat.toFixed(5)}, ${pendingLatLng.lng.toFixed(5)}`;
     if(tempPin) map.removeLayer(tempPin);
     tempPin = L.marker([pendingLatLng.lat, pendingLatLng.lng]).addTo(map);
   });
 
-  // Image file -> local preview via object URL (demo)
-  let fileObjectUrl = "";
   f_file.addEventListener("change", () => {
     if(fileObjectUrl){ URL.revokeObjectURL(fileObjectUrl); fileObjectUrl=""; }
     const file = f_file.files && f_file.files[0];
     if(file){
       fileObjectUrl = URL.createObjectURL(file);
-      // Put into URL field as preview source (demo only)
-      f_img.value = fileObjectUrl;
+      f_img.value = fileObjectUrl; // demo preview
     }
   });
 
@@ -828,39 +812,19 @@
       tips: f_tips.value.trim(),
       lat: pendingLatLng.lat,
       lon: pendingLatLng.lng,
-      is_admin_pick: isAdmin ? !!f_adminpick.checked : false,
-      created_by: isAdmin ? "admin" : "user"
+      is_admin_pick: isAdmin ? !!f_adminpick.checked : false
     };
 
-    steder.unshift(d); // newest first
+    steder.unshift(d);
     closeModal();
     render();
 
-    // Zoom to new
     const m = ensureMarker(d);
     map.setView([d.lat, d.lon], 15);
     m.openPopup();
   };
 
-  // ===============================
-  // Helpers
-  // ===============================
-  function escapeHtml(str){
-    return String(str ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  // ===============================
-  // Start (locked)
-  // ===============================
-  // Nothing else needed. User clicks paywall button to unlock.
+  // Start locked
 </script>
 </body>
 </html>
-
-
-
