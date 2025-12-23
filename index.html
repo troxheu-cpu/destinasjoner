@@ -3,227 +3,153 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Oppdag Norge – Din Reiseportal</title>
+  <title>Oppdag Norge – Full Versjon</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <style>
-    /* CSS-variabler for et konsistent mørkt tema som sett på bildet ditt */
     :root {
       --bg: #0b0f14;
       --panel: #0f1623;
-      --panel2: #111826;
       --line: rgba(255, 255, 255, .10);
       --text: #e7eef8;
-      --muted: rgba(231, 238, 248, .75);
       --primary: #22c55e;
-      --accent: #3b82f6;
-      --radius: 16px;
     }
 
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
-
-    /* Paywall og Login */
-    .paywall-overlay {
+    body, html { margin: 0; padding: 0; height: 100%; background: var(--bg); color: var(--text); font-family: sans-serif; }
+    
+    /* Paywall som faktisk forsvinner helt */
+    #authPage {
       position: fixed; inset: 0; z-index: 9999;
-      background: radial-gradient(circle at center, #111827, #000);
-      display: flex; align-items: center; justify-content: center; padding: 20px;
+      background: #000; display: flex; align-items: center; justify-content: center;
     }
-    .auth-card {
-      background: var(--panel); border: 1px solid var(--line);
-      border-radius: 24px; padding: 40px; width: 100%; max-width: 500px; text-align: center;
+
+    .app-container { display: flex; height: 100vh; width: 100vw; display: none; }
+    
+    .sidebar { 
+      width: 400px; background: var(--panel); border-right: 1px solid var(--line);
+      display: flex; flex-direction: column; z-index: 10;
     }
-    .payment-options { display: flex; gap: 15px; margin-top: 25px; }
-    .pay-btn { flex: 1; padding: 15px; border-radius: 12px; border: none; cursor: pointer; font-weight: bold; }
-    .vipps { background: #ff5b24; color: white; }
-    .paypal { background: #0070ba; color: white; }
 
-    /* App Struktur */
-    .app { display: flex; height: 100vh; }
-    .side { width: 420px; border-right: 1px solid var(--line); display: flex; flex-direction: column; background: var(--panel); }
-    #map { flex: 1; background: #0b0f14; }
+    #map { flex: 1; height: 100%; width: 100%; background: #000; }
 
-    /* Tabs og Liste */
-    .tabs { display: flex; padding: 10px; gap: 5px; border-bottom: 1px solid var(--line); }
-    .tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; border-radius: 10px; font-size: 13px; color: var(--muted); }
-    .tab.active { background: var(--line); color: var(--text); font-weight: bold; }
-    .list { flex: 1; overflow-y: auto; padding: 15px; }
-    .card { background: var(--panel2); border: 1px solid var(--line); border-radius: 16px; padding: 15px; margin-bottom: 15px; }
-    .btn { padding: 8px 12px; border-radius: 8px; border: 1px solid var(--line); background: transparent; color: var(--text); cursor: pointer; }
-    .btn-primary { background: var(--primary); color: #000; border: none; font-weight: bold; }
-
-    /* Modal */
-    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 2000; display: none; align-items: center; justify-content: center; }
-    .modal { background: var(--panel); width: 550px; max-height: 90vh; border-radius: 20px; padding: 25px; overflow-y: auto; border: 1px solid var(--line); }
-    input, select, textarea { width: 100%; padding: 12px; background: #080c14; border: 1px solid var(--line); border-radius: 10px; color: white; margin-top: 5px; margin-bottom: 15px; }
+    .btn { padding: 12px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; }
+    .btn-vipps { background: #ff5b24; color: white; margin: 10px; width: 200px; }
+    
+    .list-item { padding: 15px; border-bottom: 1px solid var(--line); }
+    
+    .modal {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      background: var(--panel); padding: 20px; border-radius: 15px; display: none; z-index: 10000;
+      border: 1px solid var(--line); width: 400px;
+    }
   </style>
 </head>
 <body>
 
-<div id="authPage" class="paywall-overlay">
-  <div class="auth-card">
-    <h1>Oppdag Norge</h1>
-    <p>Lås opp ditt personlige dashbord og bidra til kartet.</p>
-    <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; margin: 20px 0;">
-      <h2 style="margin:0">99 kr</h2>
-      <small>Engangstilgang</small>
-    </div>
-    <div class="payment-options">
-      <button class="pay-btn vipps" onclick="unlock()">Vipps</button>
-      <button class="pay-btn paypal" onclick="unlock()">PayPal</button>
-    </div>
+<div id="authPage">
+  <div style="text-align: center;">
+    <h1>Lås opp Kartet</h1>
+    <button class="btn btn-vipps" onclick="startApp()">Betal med Vipps (Demo)</button>
   </div>
 </div>
 
-<div class="app" id="mainApp" style="display: none;">
-  <aside class="side">
-    <div style="padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line);">
-      <h3 style="margin:0">🇳🇴 Reiseportal</h3>
-      <button class="btn btn-primary" onclick="openModal()">+ Legg til</button>
+<div class="app-container" id="mainApp">
+  <aside class="sidebar">
+    <div style="padding: 20px;">
+      <h2>Dashbord</h2>
+      <button class="btn" style="background: var(--primary); width: 100%;" onclick="openModal()">+ Legg til sted</button>
     </div>
-    <div class="tabs">
-      <div class="tab active" id="tabAll" onclick="setTab('all')">Utforsk alle</div>
-      <div class="tab" id="tabMy" onclick="setTab('my')">Mitt dashbord</div>
-    </div>
-    <div class="list" id="placeList"></div>
+    <div id="placeList" style="overflow-y: auto; flex: 1;"></div>
   </aside>
   <div id="map"></div>
 </div>
 
-<div class="overlay" id="modalOverlay">
-  <div class="modal">
-    <h2 id="modalTitle">Ny destinasjon</h2>
-    <p id="coordsHint" style="color: var(--accent); font-size: 12px;">Klikk på kartet for å sette posisjon</p>
-    <input id="f_title" placeholder="Navn (f.eks. Preikestolen)">
-    <input id="f_country" placeholder="Land (f.eks. Norge)">
-    <select id="f_cat">
-      <option value="Natur">Natur</option>
-      <option value="Kultur">Kultur</option>
-      <option value="Mat">Mat</option>
-    </select>
-    <textarea id="f_desc" placeholder="Beskrivelse..."></textarea>
-    <input id="f_img" placeholder="Bilde-URL (valgfritt)">
-    <div style="display: flex; gap: 10px;">
-      <button class="btn" style="flex:1" onclick="closeModal()">Avbryt</button>
-      <button class="btn btn-primary" style="flex:1" onclick="savePlace()">Lagre</button>
-    </div>
-  </div>
+<div id="addModal" class="modal">
+  <h3>Ny destinasjon</h3>
+  <p id="hint" style="color: #3b82f6; font-size: 12px;">1. Klikk på kartet for posisjon</p>
+  <input id="title" placeholder="Navn på sted" style="width:100%; margin: 10px 0; padding: 10px; background: #000; color: #fff; border: 1px solid #444;">
+  <button class="btn" style="background: var(--primary); width: 100%;" onclick="saveData()">Lagre</button>
+  <button class="btn" style="margin-top: 10px; width: 100%;" onclick="closeModal()">Avbryt</button>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  let map, markers = [], tempMarker;
-  let currentTab = 'all';
-  let editId = null;
-  let selectedLatLng = null;
-  
-  // Unik bruker-ID for denne nettleseren
-  const userId = localStorage.getItem('travel_user_id') || 'user_' + Math.random().toString(36).substr(2, 9);
-  localStorage.setItem('travel_user_id', userId);
+  let map, selectedCoords, markers = [];
+  const userID = "user_" + Math.random().toString(36).substring(7);
 
-  let places = JSON.parse(localStorage.getItem('norge_steder')) || [];
-
-  function unlock() {
+  function startApp() {
     document.getElementById('authPage').style.display = 'none';
     document.getElementById('mainApp').style.display = 'flex';
-    initMap();
-    render();
+    
+    // Viktig: Initialiser kartet ETTER at containeren er display: flex
+    setTimeout(() => {
+      initMap();
+    }, 100);
   }
 
   function initMap() {
-    map = L.map('map').setView([62, 10], 5);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png').addTo(map);
+    if (map) return;
     
-    map.on('click', (e) => {
-      if(document.getElementById('modalOverlay').style.display === 'flex') {
-        selectedLatLng = e.latlng;
-        if(tempMarker) map.removeLayer(tempMarker);
-        tempMarker = L.marker(e.latlng).addTo(map);
-        document.getElementById('coordsHint').innerText = "Posisjon valgt!";
+    map = L.map('map').setView([61, 9], 6);
+    
+    // Bruker en mer stabil kartkilde
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    // Tving kartet til å fylle hele skjermen korrekt
+    map.invalidateSize();
+
+    map.on('click', function(e) {
+      if(document.getElementById('addModal').style.display === 'block') {
+        selectedCoords = e.latlng;
+        document.getElementById('hint').innerText = "Posisjon valgt: " + e.latlng.lat.toFixed(3);
+        
+        // Legg til en midlertidig markør
+        L.marker(e.latlng).addTo(map).clearAllEventListeners;
       }
     });
   }
 
-  function render() {
-    const listEl = document.getElementById('placeList');
-    listEl.innerHTML = '';
-    markers.forEach(m => map.removeLayer(m));
-    markers = [];
-
-    const displayPlaces = currentTab === 'my' ? places.filter(p => p.owner === userId) : places;
-
-    displayPlaces.forEach(p => {
-      const marker = L.marker([p.lat, p.lng]).addTo(map).bindPopup(`<b>${p.title}</b>`);
-      markers.push(marker);
-
-      const card = document.createElement('div');
-      card.className = 'card';
-      card.innerHTML = `
-        <div style="font-weight:bold">${p.title}</div>
-        <div style="font-size:12px; color:var(--muted)">${p.country} • ${p.cat}</div>
-        <p style="font-size:13px">${p.desc}</p>
-        <div style="display:flex; gap:10px; margin-top:10px">
-          <button class="btn" onclick="map.flyTo([${p.lat}, ${p.lng}], 12)">Se kart</button>
-          ${p.owner === userId ? `<button class="btn" style="border-color:var(--accent)" onclick="editPlace(${p.id})">Rediger</button>` : ''}
-        </div>
-      `;
-      listEl.appendChild(card);
-    });
-  }
-
-  function setTab(tab) {
-    currentTab = tab;
-    document.getElementById('tabAll').classList.toggle('active', tab === 'all');
-    document.getElementById('tabMy').classList.toggle('active', tab === 'my');
-    render();
-  }
-
   function openModal() {
-    editId = null;
-    selectedLatLng = null;
-    document.getElementById('modalOverlay').style.display = 'flex';
-    document.getElementById('f_title').value = '';
-    document.getElementById('f_desc').value = '';
-  }
-
-  function editPlace(id) {
-    const p = places.find(x => x.id === id);
-    editId = id;
-    selectedLatLng = { lat: p.lat, lng: p.lng };
-    document.getElementById('f_title').value = p.title;
-    document.getElementById('f_country').value = p.country;
-    document.getElementById('f_desc').value = p.desc;
-    document.getElementById('modalOverlay').style.display = 'flex';
-  }
-
-  function savePlace() {
-    if(!selectedLatLng) return alert("Velg et punkt på kartet først!");
-    
-    const data = {
-      id: editId || Date.now(),
-      title: document.getElementById('f_title').value,
-      country: document.getElementById('f_country').value,
-      cat: document.getElementById('f_cat').value,
-      desc: document.getElementById('f_desc').value,
-      lat: selectedLatLng.lat,
-      lng: selectedLatLng.lng,
-      owner: userId
-    };
-
-    if(editId) {
-      const index = places.findIndex(p => p.id === editId);
-      places[index] = data;
-    } else {
-      places.push(data);
-    }
-
-    localStorage.setItem('norge_steder', JSON.stringify(places));
-    closeModal();
-    render();
+    document.getElementById('addModal').style.display = 'block';
+    selectedCoords = null;
+    document.getElementById('hint').innerText = "1. Klikk på kartet for posisjon";
   }
 
   function closeModal() {
-    document.getElementById('modalOverlay').style.display = 'none';
-    if(tempMarker) map.removeLayer(tempMarker);
+    document.getElementById('addModal').style.display = 'none';
+  }
+
+  function saveData() {
+    if(!selectedCoords) {
+      alert("Du må klikke på kartet for å velge et sted først!");
+      return;
+    }
+    
+    const title = document.getElementById('title').value;
+    const newPlace = { title, lat: selectedCoords.lat, lng: selectedCoords.lng, owner: userID };
+    
+    let saved = JSON.parse(localStorage.getItem('myPlaces') || "[]");
+    saved.push(newPlace);
+    localStorage.setItem('myPlaces', JSON.stringify(saved));
+    
+    renderList();
+    closeModal();
+    L.marker([newPlace.lat, newPlace.lng]).addTo(map).bindPopup(newPlace.title);
+  }
+
+  function renderList() {
+    const list = document.getElementById('placeList');
+    list.innerHTML = '';
+    const saved = JSON.parse(localStorage.getItem('myPlaces') || "[]");
+    
+    saved.forEach(p => {
+      const item = document.createElement('div');
+      item.className = 'list-item';
+      item.innerHTML = `<strong>${p.title}</strong><br><small>Din destinasjon</small>`;
+      item.onclick = () => map.flyTo([p.lat, p.lng], 12);
+      list.appendChild(item);
+    });
   }
 </script>
 </body>
