@@ -608,10 +608,6 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-/* ============================================================
-   Mega Demo – single file app
-   ============================================================ */
-
 (() => {
   "use strict";
 
@@ -717,6 +713,25 @@
   }
 
   /* ----------------------------
+     ✅ Public IP helper (ipify)
+  ---------------------------- */
+  let _cachedIP = null;
+  async function getPublicIP(){
+    if(_cachedIP) return _cachedIP;
+    try{
+      const res = await fetch("https://api.ipify.org?format=json", { cache: "no-store" });
+      if(!res.ok) return null;
+      const data = await res.json();
+      const ip = String(data?.ip || "").trim();
+      if(!ip) return null;
+      _cachedIP = ip;
+      return ip;
+    } catch {
+      return null;
+    }
+  }
+
+  /* ----------------------------
      Storage + State
   ---------------------------- */
   const LS_KEYS = {
@@ -791,6 +806,9 @@
     userMarker: null,
     userLatLng: null,
 
+    // ✅ new: store public IP for popup
+    userIP: null,
+
     // undo/redo history
     undoStack: [],
     redoStack: []
@@ -832,7 +850,6 @@
   }
 
   function snapshot(){
-    // deep clone minimal
     return {
       places: JSON.parse(JSON.stringify(state.places)),
       favs: Array.from(state.favs)
@@ -840,7 +857,6 @@
   }
 
   function pushHistory(reason="Endring"){
-    // store snapshot for undo
     state.undoStack.push({ reason, snap: snapshot(), at: Date.now() });
     if(state.undoStack.length > 50) state.undoStack.shift();
     state.redoStack = [];
@@ -957,7 +973,6 @@
     state.map = L.map("map", { zoomControl:true }).setView([59.20, 10.25], 5);
     addTiles("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", "OSM HOT");
 
-    // Click while modal open: set point
     state.map.on("click", (e) => {
       if(overlay.style.display !== "flex") return;
       state.pendingLatLng = e.latlng;
@@ -967,7 +982,6 @@
       toast("ok","Posisjon valgt", "Klikk Lagre for å lagre destinasjonen.", 1400);
     });
 
-    // Deep-link open: hash change
     window.addEventListener("hashchange", () => {
       const id = (location.hash || "").replace("#place=", "");
       if(id) openDetailsById(id);
@@ -1039,15 +1053,12 @@
     const hay = `${d.title} ${d.description} ${d.tips||""} ${d.place_name||""}`.toLowerCase();
     const q = query.toLowerCase().trim();
     if(!q) return 0;
-    // simple scoring: title match high, description medium
     let s = 0;
     if(d.title.toLowerCase().includes(q)) s += 6;
     if((d.place_name||"").toLowerCase().includes(q)) s += 4;
     if((d.tips||"").toLowerCase().includes(q)) s += 2;
     if(hay.includes(q)) s += 1;
-    // rating bump
     if(d.rating) s += d.rating * 0.2;
-    // admin bump
     if(d.is_admin_pick) s += 0.6;
     return s;
   }
@@ -1066,7 +1077,6 @@
              (!onlyFav || state.favs.has(d.id));
     });
 
-    // sort
     const sort = sortEl.value;
     if(sort === "newest"){
       items.sort((a,b) => (b.created_at||0) - (a.created_at||0));
@@ -1082,7 +1092,7 @@
           return da - db;
         });
       }
-    } else { // relevance
+    } else {
       if(q){
         items.sort((a,b) => relevanceScore(b,q) - relevanceScore(a,q));
       }
@@ -1179,7 +1189,6 @@
           ${d.image_url ? `<img class="thumb" src="${escapeHtml(d.image_url)}" alt="">` : ``}
         `;
 
-        // card click: center map + open popup
         card.addEventListener("click", (ev) => {
           const target = ev.target;
           if(target && target.closest && (target.closest("[data-fav]") || target.closest("[data-open]"))) return;
@@ -1188,13 +1197,11 @@
           m.openPopup();
         });
 
-        // fav button
         card.querySelector("[data-fav]")?.addEventListener("click", (ev) => {
           ev.stopPropagation();
           toggleFav(d.id);
         });
 
-        // details button
         card.querySelector("[data-open]")?.addEventListener("click", (ev) => {
           ev.stopPropagation();
           openDetails(d.id);
@@ -1204,7 +1211,6 @@
       }
     }
 
-    // update hash deep link if exists
     if(location.hash.startsWith("#place=")){
       const id = location.hash.replace("#place=","");
       if(id && !state.places.find(x => x.id === id)){
@@ -1248,7 +1254,6 @@
     saveHelp.textContent = "";
     saveHelp.style.color = "";
 
-    // clear temp pin
     state.pendingLatLng = null;
     if(state.tempPin && state.mapReady){ state.map.removeLayer(state.tempPin); state.tempPin = null; }
 
@@ -1336,7 +1341,6 @@
       is_admin_pick: state.isAdmin ? !!f_adminpick.checked : false
     };
 
-    // basic URL sanitize (allow empty or http(s) or blob:)
     if(incoming.image_url && !/^https?:\/\/|^blob:/.test(incoming.image_url)){
       saveHelp.style.color = "var(--gold)";
       saveHelp.textContent = "Bilde-URL må starte med http(s):// (eller være tom).";
@@ -1350,11 +1354,7 @@
       const idx = state.places.findIndex(x => x.id===state.editingId);
       if(idx === -1){ toast("bad","Feil","Fant ikke destinasjonen."); return; }
       const prev = state.places[idx];
-      state.places[idx] = {
-        ...prev,
-        ...incoming,
-        updated_at: now
-      };
+      state.places[idx] = { ...prev, ...incoming, updated_at: now };
       savePlaces();
       closeAddModal();
       render();
@@ -1366,12 +1366,7 @@
       m.openPopup();
       toast("ok","Oppdatert", "Destinasjonen ble oppdatert.");
     } else {
-      const d = {
-        id: uid(),
-        ...incoming,
-        created_at: now,
-        updated_at: now
-      };
+      const d = { id: uid(), ...incoming, created_at: now, updated_at: now };
       state.places.unshift(d);
       savePlaces();
       closeAddModal();
@@ -1392,7 +1387,7 @@
     const file = f_file.files && f_file.files[0];
     if(file){
       state.fileObjectUrl = URL.createObjectURL(file);
-      f_img.value = state.fileObjectUrl; // local preview
+      f_img.value = state.fileObjectUrl;
       toast("ok","Bilde valgt", "Lokalt forhåndsvisningsbilde lagt inn.", 1600);
     }
   });
@@ -1465,7 +1460,6 @@
       </div>
     `;
 
-    // wire events
     $("#detailsFavBtn").onclick = () => toggleFav(d.id);
     $("#detailsCenterBtn").onclick = () => {
       const m = ensureMarker(d);
@@ -1508,7 +1502,6 @@
       updateUndoRedoButtons();
     };
 
-    // hide admin-only controls if not admin
     if(!state.isAdmin){
       $("#detailsEditBtn").disabled = true;
       $("#detailsDeleteBtn").disabled = true;
@@ -1519,16 +1512,20 @@
     requestAnimationFrame(forceMapResize);
   }
 
-  // expose to popup button in leaflet popupHtml
   window.__openDetails = (id) => openDetails(id);
 
   /* ----------------------------
-     Geolocation
+     ✅ Geolocation (with IP in popup under "Du er her.")
   ---------------------------- */
   function setUserMarker(latlng){
     state.userLatLng = latlng;
+
+    // Keep sidebar status as coords (optional)
     geoStatus.textContent = `Din posisjon: ${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}`;
     geoStatus.style.color = "rgba(231,238,248,.75)";
+
+    const ipLine = state.userIP ? `IP: ${escapeHtml(state.userIP)}` : `IP: henter…`;
+    const popupHtml = `Du er her.<br><small style="opacity:.85">${ipLine}</small>`;
 
     if(!state.userMarker){
       state.userMarker = L.circleMarker([latlng.lat, latlng.lng], {
@@ -1537,9 +1534,11 @@
         opacity: 0.9,
         fillOpacity: 0.25
       }).addTo(state.map);
-      state.userMarker.bindPopup("Du er her.");
+
+      state.userMarker.bindPopup(popupHtml);
     } else {
       state.userMarker.setLatLng([latlng.lat, latlng.lng]);
+      state.userMarker.setPopupContent(popupHtml);
     }
 
     render();
@@ -1554,10 +1553,18 @@
     geoStatus.style.color = "rgba(231,238,248,.75)";
 
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
+      async (pos) => {
         const latlng = L.latLng(pos.coords.latitude, pos.coords.longitude);
         setUserMarker(latlng);
         state.map.setView([latlng.lat, latlng.lng], 12);
+
+        // Fetch public IP and update popup text under "Du er her."
+        const ip = await getPublicIP();
+        if(ip){
+          state.userIP = ip;
+          setUserMarker(latlng); // refresh popup content
+        }
+
         toast("ok","Finn meg", "Fant posisjonen din.", 1600);
       },
       (err) => {
@@ -1603,7 +1610,6 @@
       return;
     }
 
-    // light validation + normalize
     const cleaned = [];
     for(const p of places){
       if(!p || typeof p !== "object") continue;
@@ -1651,7 +1657,6 @@
     updateModeUI();
     forceMapResize();
 
-    // if deep link exists, open after render
     render();
     const id = (location.hash || "").replace("#place=", "");
     if(id) openDetailsById(id);
@@ -1697,7 +1702,6 @@
   undoBtn.onclick = undo;
   redoBtn.onclick = redo;
 
-  // keyboard: ESC close modals
   window.addEventListener("keydown", (e) => {
     if(e.key === "Escape"){
       if(detailsOverlay.style.display === "flex") closeDetails();
@@ -1717,7 +1721,6 @@
   loadState();
   updateUndoRedoButtons();
   renderChips();
-
   toast("ok","Klar", "Åpne som Admin/Bruker for å starte.", 2400);
 
 })();
