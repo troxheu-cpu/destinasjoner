@@ -1,97 +1,202 @@
 <!DOCTYPE html>
-<html>
+<html lang="no">
 <head>
-    <title>Prototype v1</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Norge / Explorer</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
-        body { margin: 0; display: flex; height: 100vh; font-family: sans-serif; }
-        #sidebar { width: 350px; border-right: 1px solid #ccc; display: flex; flex-direction: column; padding: 10px; box-sizing: border-box; }
-        #map { flex-grow: 1; cursor: crosshair; }
-        .place-card { border: 1px solid #ddd; padding: 10px; margin-top: 10px; border-radius: 4px; position: relative; }
-        .delete-btn { color: red; cursor: pointer; float: right; }
-        input, textarea { width: 100%; margin-bottom: 5px; box-sizing: border-box; }
-        #controls { background: #eee; padding: 10px; border-radius: 4px; }
+        :root {
+            --brand: #3b82f6;
+            --bg: #020617;
+            --surface: #0f172a;
+            --text: #f8fafc;
+            --muted: #94a3b8;
+            --glass: rgba(15, 23, 42, 0.8);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
+
+        /* --- HOME SECTION --- */
+        #home-page {
+            position: fixed; inset: 0; z-index: 5000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: radial-gradient(circle at top right, #1e3a8a, var(--bg));
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .hero { text-align: center; max-width: 800px; padding: 20px; }
+        .hero h1 { font-size: 5rem; font-weight: 800; letter-spacing: -0.05em; margin-bottom: 20px; }
+        .hero p { color: var(--muted); font-size: 1.2rem; margin-bottom: 40px; }
+        
+        .cta-group { display: flex; gap: 15px; justify-content: center; }
+        .btn { 
+            padding: 14px 28px; border-radius: 99px; border: none; font-weight: 600; 
+            cursor: pointer; transition: all 0.2s; font-size: 1rem; text-decoration: none;
+        }
+        .btn-primary { background: var(--brand); color: white; }
+        .btn-primary:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
+        .btn-glass { background: var(--glass); color: white; border: 1px solid var(--border); }
+
+        /* --- MAP INTERFACE --- */
+        #app-interface { display: grid; grid-template-columns: 400px 1fr; height: 100vh; visibility: hidden; }
+
+        .sidebar {
+            background: var(--surface); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; z-index: 100;
+        }
+
+        .sidebar-header { padding: 24px; border-bottom: 1px solid var(--border); }
+        .sidebar-header h2 { font-size: 1.5rem; font-weight: 700; }
+
+        .search-container { padding: 16px 24px; }
+        .search-input { 
+            width: 100%; background: #1e293b; border: 1px solid var(--border); 
+            padding: 12px 16px; border-radius: 12px; color: white; outline: none;
+        }
+
+        #location-list { flex: 1; overflow-y: auto; padding: 12px 24px; }
+        .place-card {
+            background: var(--border); border-radius: 16px; padding: 16px; margin-bottom: 12px;
+            cursor: pointer; border: 1px solid transparent; transition: 0.2s;
+        }
+        .place-card:hover { border-color: var(--brand); background: rgba(255,255,255,0.05); }
+        .place-card h3 { font-size: 1rem; margin-bottom: 4px; }
+        .place-card p { font-size: 0.85rem; color: var(--muted); line-height: 1.4; }
+
+        #map { background: #0f172a; }
+
+        /* Floating Add Action */
+        .add-overlay {
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+            z-index: 1000; background: var(--glass); backdrop-filter: blur(12px);
+            padding: 20px; border-radius: 24px; border: 1px solid var(--border);
+            width: 320px; display: none; box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .active-app #home-page { transform: translateY(-100%); }
+        .active-app #app-interface { visibility: visible; }
+
+        /* Custom Leaflet Dark/Vibrant */
+        .leaflet-container { background: var(--bg) !important; }
     </style>
 </head>
 <body>
 
-<div id="sidebar">
-    <input type="text" id="search" placeholder="Søk..." oninput="render()">
-    <div id="controls">
-        <strong>Ny destinasjon:</strong><br>
-        <small id="hint">1. Klikk i kartet</small>
-        <input id="title" placeholder="Navn">
-        <textarea id="desc" placeholder="Beskrivelse"></textarea>
-        <button onclick="addLocation()">Lagre</button>
+<section id="home-page">
+    <div class="hero">
+        <h1>Norge.</h1>
+        <p>Oppdag de dypeste fjordene og de høyeste toppene. En profesjonell kartlegger for moderne eventyrere.</p>
+        <div class="cta-group">
+            <button class="btn btn-primary" onclick="launchApp()">Utforsk kartet</button>
+            <button class="btn btn-glass" onclick="launchApp()">Oppgrader</button>
+        </div>
     </div>
-    <div id="list" style="overflow: auto;"></div>
-</div>
+</section>
 
-<div id="map"></div>
+<main id="app-interface">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>Explorer</h2>
+        </div>
+        <div class="search-container">
+            <input type="text" class="search-input" id="search" placeholder="Finn en destinasjon..." oninput="render()">
+        </div>
+        <div id="location-list">
+            </div>
+    </aside>
+
+    <div id="map"></div>
+
+    <div id="add-form" class="add-overlay">
+        <h4 style="margin-bottom: 12px;">Ny destinasjon</h4>
+        <input type="text" id="in-title" class="search-input" placeholder="Navn på sted" style="margin-bottom: 8px;">
+        <textarea id="in-desc" class="search-input" placeholder="Beskrivelse..." style="height: 80px; margin-bottom: 12px;"></textarea>
+        <div style="display: flex; gap: 8px;">
+            <button class="btn btn-primary" style="flex: 1; padding: 10px;" onclick="saveEntry()">Lagre</button>
+            <button class="btn btn-glass" style="flex: 1; padding: 10px;" onclick="closeForm()">Lukk</button>
+        </div>
+        <p id="coord-hint" style="font-size: 11px; color: var(--brand); margin-top: 10px; text-align: center;">Klikk i kartet for posisjon</p>
+    </div>
+</main>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     let map, markers = [], pendingCoord = null;
-    let steder = JSON.parse(localStorage.getItem('map_data') || '[]');
+    let store = JSON.parse(localStorage.getItem('norge_explorer_v1') || '[]');
 
-    // Init kart
-    map = L.map('map').setView([62, 10], 5);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-
-    // Fang koordinater ved klikk
-    map.on('click', (e) => {
-        pendingCoord = e.latlng;
-        document.getElementById('hint').innerHTML = `📍 Valgt: ${e.latlng.lat.toFixed(3)}, ${e.latlng.lng.toFixed(3)}`;
-    });
-
-    function addLocation() {
-        const t = document.getElementById('title').value;
-        const d = document.getElementById('desc').value;
-        if (!t || !pendingCoord) return alert("Mangler navn eller klikk på kart");
-
-        steder.push({ id: Date.now(), title: t, desc: d, lat: pendingCoord.lat, lng: pendingCoord.lng });
-        save();
-        document.getElementById('title').value = '';
-        document.getElementById('desc').value = '';
-        pendingCoord = null;
-        document.getElementById('hint').innerText = "1. Klikk i kartet";
+    function launchApp() {
+        document.body.classList.add('active-app');
+        setTimeout(initMap, 600);
     }
 
-    function save() {
-        localStorage.setItem('map_data', JSON.stringify(steder));
+    function initMap() {
+        if(map) return;
+        
+        // High-end Vibrant Map Style (Carto Voyager)
+        map = L.map('map', { zoomControl: false }).setView([62.0, 9.0], 5);
+        
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png', {
+            attribution: 'Explorer'
+        }).addTo(map);
+
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+        map.on('click', (e) => {
+            document.getElementById('add-form').style.display = 'block';
+            pendingCoord = e.latlng;
+            document.getElementById('coord-hint').innerText = `📍 Punkt satt: ${e.latlng.lat.toFixed(3)}`;
+        });
+
         render();
     }
 
-    function deleteLoc(id) {
-        steder = steder.filter(s => s.id !== id);
-        save();
+    function saveEntry() {
+        const title = document.getElementById('in-title').value;
+        const desc = document.getElementById('in-desc').value;
+        if(!title || !pendingCoord) return;
+
+        store.push({
+            id: Date.now(),
+            title, desc,
+            lat: pendingCoord.lat, lng: pendingCoord.lng
+        });
+
+        localStorage.setItem('norge_explorer_v1', JSON.stringify(store));
+        closeForm();
+        render();
+    }
+
+    function closeForm() {
+        document.getElementById('add-form').style.display = 'none';
+        pendingCoord = null;
     }
 
     function render() {
+        const list = document.getElementById('location-list');
         const q = document.getElementById('search').value.toLowerCase();
-        const list = document.getElementById('list');
         list.innerHTML = '';
         markers.forEach(m => map.removeLayer(m));
         markers = [];
 
-        steder.filter(s => s.title.toLowerCase().includes(q)).forEach(s => {
-            // Marker
-            const m = L.marker([s.lat, s.lng]).addTo(map).bindPopup(s.title);
+        store.filter(s => s.title.toLowerCase().includes(q)).forEach(s => {
+            // Marker styling
+            const m = L.circleMarker([s.lat, s.lng], {
+                radius: 8, fillOpacity: 1, color: '#fff', weight: 2, fillColor: '#3b82f6'
+            }).addTo(map).bindPopup(`<b>${s.title}</b>`);
             markers.push(m);
 
-            // Liste-element
-            const el = document.createElement('div');
-            el.className = 'place-card';
-            el.innerHTML = `
-                <span class="delete-btn" onclick="deleteLoc(${s.id})">✖</span>
-                <strong onclick="map.flyTo([${s.lat}, ${s.lng}], 12)" style="cursor:pointer">${s.title}</strong>
-                <p style="margin:5px 0; font-size:12px">${s.desc}</p>
-            `;
-            list.appendChild(el);
+            // Card styling
+            const card = document.createElement('div');
+            card.className = 'place-card';
+            card.innerHTML = `<h3>${s.title}</h3><p>${s.desc}</p>`;
+            card.onclick = () => map.flyTo([s.lat, s.lng], 12);
+            list.appendChild(card);
         });
     }
-
-    render();
 </script>
+
 </body>
 </html>
