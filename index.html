@@ -1,367 +1,1726 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>EXPLORER / Norge Pro</title>
-    
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    
-    <style>
-        :root {
-            --brand: #6366f1;
-            --brand-dark: #4f46e5;
-            --bg: #0f172a;
-            --surface: #1e293b;
-            --surface-light: #334155;
-            --text: #f8fafc;
-            --text-muted: #94a3b8;
-            --success: #22c55e;
-            --danger: #ef4444;
-            --border: rgba(255, 255, 255, 0.08);
-            --glass: rgba(15, 23, 42, 0.9);
-            --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
-        }
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Oppdag Norge – Destinasjoner (Mega Demo)</title>
 
-        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
-        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); overflow: hidden; line-height: 1.5; }
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
-        /* --- LANDING / HERO SECTION --- */
-        #hero-section {
-            position: fixed; inset: 0; z-index: 10000;
-            background: radial-gradient(circle at 0% 0%, #312e81 0%, var(--bg) 50%);
-            display: flex; align-items: center; justify-content: center;
-            transition: transform 0.8s cubic-bezier(0.87, 0, 0.13, 1);
-        }
+  <style>
+    :root{
+      --bg:#0b0f14;
+      --panel:#0f1623;
+      --panel2:#111826;
+      --panel3:#0c1320;
+      --line:rgba(255,255,255,.10);
+      --line2:rgba(255,255,255,.16);
+      --text:#e7eef8;
+      --muted:rgba(231,238,248,.75);
+      --muted2:rgba(231,238,248,.58);
+      --ok:#22c55e;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+      --chip:rgba(255,255,255,.08);
+      --shadow: 0 12px 28px rgba(0,0,0,.35);
+      --radius:16px;
+      --radius2:22px;
+      --accent:rgba(34,197,94,.18);
+      --accent2:rgba(34,197,94,.32);
+      --gold:#ffd18a;
+    }
 
-        .hero-content { text-align: center; max-width: 900px; padding: 40px; }
-        .hero-content h1 { font-size: clamp(3rem, 8vw, 6rem); font-weight: 900; letter-spacing: -0.04em; line-height: 0.9; margin-bottom: 24px; }
-        .hero-content p { font-size: 1.25rem; color: var(--text-muted); margin-bottom: 40px; max-width: 600px; margin-inline: auto; }
-        
-        .btn { 
-            display: inline-flex; align-items: center; gap: 10px;
-            padding: 16px 32px; border-radius: 12px; border: none; font-weight: 700; 
-            cursor: pointer; transition: all 0.2s; font-size: 1.1rem; text-decoration: none;
-        }
-        .btn-main { background: var(--brand); color: white; box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4); }
-        .btn-main:hover { background: var(--brand-dark); transform: translateY(-2px); }
+    *{ box-sizing:border-box; }
+    html, body { height:100%; }
+    body{
+      margin:0;
+      font-family: Arial, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      overflow:hidden;
+    }
 
-        /* --- APP LAYOUT --- */
-        .app-container { display: grid; grid-template-columns: 400px 1fr; height: 100vh; opacity: 0; transition: opacity 1s ease; }
-        .app-active .app-container { opacity: 1; }
-        .app-active #hero-section { transform: translateY(-100%); }
+    .app{
+      height:100vh;
+      width:100vw;
+      display:flex;
+      overflow:hidden;
+      min-height:0;
+    }
 
-        /* SIDEBAR */
-        .sidebar { background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 100; box-shadow: 10px 0 30px rgba(0,0,0,0.2); }
-        
-        .sidebar-nav { padding: 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-        .logo { font-weight: 800; font-size: 1.25rem; letter-spacing: -0.02em; color: var(--brand); }
+    .side{
+      width:420px;
+      min-width:320px;
+      max-width:560px;
+      border-right:1px solid var(--line);
+      padding:14px;
+      background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,0));
+      overflow:auto;
+      min-height:0;
+    }
 
-        .sidebar-scroll { flex: 1; overflow-y: auto; padding: 20px; }
-        
-        .search-wrapper { position: relative; margin-bottom: 24px; }
-        .search-wrapper i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
-        .search-input { width: 100%; background: var(--bg); border: 1px solid var(--border); padding: 14px 14px 14px 40px; border-radius: 10px; color: white; transition: border 0.2s; }
-        .search-input:focus { border-color: var(--brand); }
+    #map{
+      flex:1;
+      width:100%;
+      height:100%;
+      min-height:0;
+      background:#0b0f14;
+    }
 
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
-        .stat-box { background: var(--bg); padding: 15px; border-radius: 10px; border: 1px solid var(--border); }
-        .stat-box small { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; }
-        .stat-box div { font-size: 1.25rem; font-weight: 700; color: var(--brand); }
+    .topbar{
+      display:flex; align-items:center; gap:10px;
+      padding:10px 12px;
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255,255,255,.02);
+      box-shadow: var(--shadow);
+      position:sticky; top:0;
+      z-index:10;
+      backdrop-filter: blur(10px);
+    }
+    .brand{ display:flex; align-items:center; gap:10px; min-width:0; }
+    .logo{
+      width:34px; height:34px; border-radius:10px;
+      background: radial-gradient(circle at 30% 30%, rgba(34,197,94,.9), rgba(34,197,94,.25));
+      border:1px solid rgba(34,197,94,.35);
+      flex:0 0 auto;
+    }
+    .brand h1{ font-size:15px; margin:0; font-weight:800; }
+    .brand .sub{
+      font-size:12px;
+      opacity:.75;
+      margin-top:2px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width:220px;
+    }
+    .spacer{ flex:1; }
 
-        .list-header { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .btn{
+      appearance:none; border:1px solid var(--line2);
+      background: var(--panel2); color:var(--text);
+      padding:9px 10px; border-radius:12px; cursor:pointer;
+      font-weight:800; font-size:12px;
+      transition: transform .06s ease, border-color .12s ease, background .12s ease;
+      white-space:nowrap;
+    }
+    .btn:hover{ border-color: rgba(255,255,255,.28); }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{ background: rgba(34,197,94,.16); border-color: rgba(34,197,94,.35); }
+    .btn.primary:hover{ border-color: rgba(34,197,94,.65); background: rgba(34,197,94,.20); }
+    .btn.warn{ background: rgba(245,158,11,.14); border-color: rgba(245,158,11,.35); }
+    .btn.bad{ background: rgba(239,68,68,.12); border-color: rgba(239,68,68,.35); }
+    .btn.ghost{ background: transparent; }
 
-        .location-card { 
-            background: var(--surface-light); border-radius: 14px; padding: 16px; margin-bottom: 12px; 
-            cursor: pointer; border: 1px solid transparent; transition: all 0.2s; position: relative;
-            animation: fadeIn 0.3s ease forwards;
-        }
-        .location-card:hover { transform: scale(1.02); border-color: var(--brand); }
-        .location-card h3 { font-size: 1.05rem; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; }
-        .location-card p { font-size: 0.85rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-        .location-card .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; background: var(--bg); margin-top: 8px; font-weight: 600; }
-        
-        .delete-btn { color: var(--text-muted); font-size: 0.9rem; transition: 0.2s; padding: 5px; }
-        .delete-btn:hover { color: var(--danger); }
+    .pill{
+      display:inline-flex; align-items:center; gap:6px;
+      padding:4px 10px; border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      font-size:12px; color: var(--muted);
+      white-space:nowrap;
+    }
+    .dot{ width:8px; height:8px; border-radius:999px; background: var(--bad); }
+    .dot.on{ background: var(--ok); }
 
-        /* MAP AREA */
-        #map-wrapper { position: relative; }
-        #map { height: 100%; width: 100%; }
+    .section{
+      margin-top:12px;
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel);
+      padding:12px;
+    }
 
-        /* ADD PANEL (MODAL-ISH) */
-        .add-panel {
-            position: absolute; top: 30px; left: 30px; width: 360px;
-            background: var(--glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border-radius: 20px; border: 1px solid var(--border); padding: 24px;
-            z-index: 1000; box-shadow: var(--shadow);
-            display: none; animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .add-panel label { display: block; font-size: 0.85rem; margin-bottom: 6px; color: var(--text-muted); }
-        .add-panel input, .add-panel textarea, .add-panel select { 
-            width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--border); 
-            padding: 12px; border-radius: 8px; color: white; margin-bottom: 16px;
-        }
-        .image-preview { width: 100%; height: 120px; border-radius: 8px; border: 2px dashed var(--border); margin-bottom: 16px; display: flex; align-items: center; justify-content: center; overflow: hidden; background-size: cover; background-position: center; }
+    .row{ display:flex; gap:8px; align-items:center; }
+    .row + .row{ margin-top:8px; }
+    .row .grow{ flex:1; }
 
-        /* ANIMATIONS */
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+    input, select, textarea{
+      width:100%;
+      padding:10px 10px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background: var(--panel3);
+      color: var(--text);
+      outline:none;
+      font-size:13px;
+    }
+    input::placeholder, textarea::placeholder{ color: var(--muted2); }
+    textarea{ min-height: 84px; resize: vertical; }
 
-        /* CUSTOM POPUP */
-        .leaflet-popup-content-wrapper { background: var(--surface); color: var(--text); border-radius: 12px; border: 1px solid var(--border); }
-        .leaflet-popup-tip { background: var(--surface); }
-        
-        /* SCROLLBAR */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--surface-light); border-radius: 10px; }
-    </style>
+    .chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+    .chip{
+      border:1px solid var(--line);
+      background: var(--chip);
+      color: var(--text);
+      padding:7px 10px;
+      border-radius:999px;
+      font-size:12px;
+      cursor:pointer;
+      user-select:none;
+      transition: border-color .12s ease, background .12s ease;
+    }
+    .chip.active{ border-color: rgba(34,197,94,.75); background: rgba(34,197,94,.14); }
+
+    .toggles{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+    .toggle{
+      display:flex; align-items:center; gap:8px;
+      padding:8px 10px; border-radius:12px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.02);
+      font-size:12px; color: var(--muted);
+      cursor:pointer;
+      user-select:none;
+    }
+    .toggle input{ width:auto; }
+    .toggle strong{ color:var(--text); font-weight:800; }
+
+    .help{ font-size:12px; color: var(--muted2); margin-top:8px; line-height:1.35; }
+
+    .list{ margin-top:12px; display:flex; flex-direction:column; gap:10px; }
+    .card{
+      padding:10px; border-radius: 16px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.02);
+      cursor:pointer;
+      transition: border-color .12s ease, transform .06s ease;
+    }
+    .card:hover{ border-color: rgba(255,255,255,.22); }
+    .card:active{ transform: translateY(1px); }
+    .card .titleRow{ display:flex; align-items:center; gap:8px; }
+    .card .title{ font-weight:900; font-size:14px; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .iconBtn{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      color:var(--text);
+      border-radius:12px;
+      padding:6px 8px;
+      cursor:pointer;
+      font-weight:900;
+      font-size:12px;
+    }
+    .iconBtn:hover{ border-color: rgba(255,255,255,.22); }
+    .iconBtn.fav.on{ border-color: rgba(255,209,138,.55); background: rgba(255,209,138,.10); color: var(--gold); }
+
+    .meta{ margin-top:6px; display:flex; flex-wrap:wrap; gap:6px; }
+    .badge{
+      display:inline-block; font-size:11px; padding:2px 8px; border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.04);
+      color: var(--muted);
+    }
+    .badge.admin{ border-color: rgba(245,158,11,.55); background: rgba(245,158,11,.12); color: #ffd8a8; }
+    .badge.fav{ border-color: rgba(255,209,138,.55); background: rgba(255,209,138,.10); color: var(--gold); }
+    .badge.km{ border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.08); color: rgba(231,238,248,.9); }
+
+    .desc{ margin-top:6px; font-size:12px; color: var(--muted); line-height:1.35; }
+    .thumb{ width:100%; border-radius: 12px; margin-top:8px; display:block; border:1px solid var(--line); }
+
+    /* ✅ Overlay: kartklikk går gjennom */
+    .overlay{
+      position:fixed; inset:0;
+      background: rgba(0,0,0,.55);
+      display:none;
+      align-items:center; justify-content:center;
+      padding:18px;
+      z-index:2000;
+      pointer-events:none;
+    }
+    .overlay .modal{ pointer-events:auto; }
+
+    .modal{
+      width:min(900px, 98vw);
+      max-height: 92vh;
+      overflow:auto;
+      border:1px solid rgba(255,255,255,.14);
+      background: #0c1220;
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+    }
+    .modalHeader{
+      display:flex; align-items:center; gap:10px;
+      padding:12px 14px;
+      border-bottom: 1px solid var(--line);
+      position:sticky; top:0;
+      background: rgba(12,18,32,.96);
+      backdrop-filter: blur(8px);
+      z-index:2;
+    }
+    .modalHeader h2{ margin:0; font-size:14px; font-weight:1000; letter-spacing:.2px; }
+    .modalHeader .small{ font-size:12px; color: var(--muted); }
+    .modalBody{ padding:14px; }
+    .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .grid .full{ grid-column: 1 / -1; }
+    .label{ font-size:12px; color: var(--muted); margin: 2px 0 6px; }
+
+    .stars{
+      display:flex; gap:6px; align-items:center;
+      padding:8px 10px; border-radius:12px;
+      border:1px solid var(--line);
+      background: var(--panel3);
+      height: 40px;
+    }
+    .star{ font-size:18px; cursor:pointer; user-select:none; opacity:.45; }
+    .star.on{ opacity:1; color: var(--gold); }
+    .starVal{ font-size:12px; color: var(--muted); margin-left:8px; }
+
+    .paywall{
+      position:fixed; inset:0; z-index:3000;
+      background: radial-gradient(circle at 25% 10%, rgba(34,197,94,.18), rgba(0,0,0,0) 45%),
+                  radial-gradient(circle at 70% 20%, rgba(245,158,11,.15), rgba(0,0,0,0) 40%),
+                  var(--bg);
+      display:flex; align-items:center; justify-content:center;
+      padding:18px;
+    }
+    .payCard{
+      width:min(900px, 98vw);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: var(--radius2);
+      background: rgba(255,255,255,.03);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+    }
+    .payLeft{ padding:18px; }
+    .payRight{ padding:18px; border-left:1px solid rgba(255,255,255,.10); background: rgba(17,24,38,.35); }
+    .payTitle{ font-size:22px; font-weight:1000; margin:0; }
+    .paySub{ margin-top:8px; color:var(--muted); line-height:1.4; }
+    .payBullets{ margin-top:12px; color:var(--muted); padding-left:18px; }
+    .payBullets li{ margin:6px 0; }
+    .payBox{
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: 18px;
+      padding:14px;
+      background: rgba(12,18,32,.55);
+    }
+    .payBox h3{ margin:0 0 8px; font-size:14px; }
+    .price{ font-size:26px; font-weight:1000; margin: 6px 0 6px; }
+    .fine{ font-size:12px; color:var(--muted2); line-height:1.4; }
+    .sep{ height:1px; background: rgba(255,255,255,.10); margin: 12px 0; }
+    .note{ font-size:12px; color:var(--muted2); margin-top:10px; }
+
+    /* Toasts */
+    .toasts{
+      position:fixed;
+      right:14px;
+      bottom:14px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      z-index:4000;
+      pointer-events:none;
+    }
+    .toast{
+      min-width: 260px;
+      max-width: 360px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(12,18,32,.92);
+      box-shadow: var(--shadow);
+      border-radius: 16px;
+      padding:10px 12px;
+      pointer-events:auto;
+    }
+    .toast .tRow{ display:flex; gap:10px; align-items:flex-start; }
+    .toast .tIcon{
+      width:26px; height:26px; border-radius:10px;
+      display:flex; align-items:center; justify-content:center;
+      font-weight:1000;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      flex:0 0 auto;
+    }
+    .toast.ok .tIcon{ border-color: rgba(34,197,94,.35); background: rgba(34,197,94,.12); }
+    .toast.warn .tIcon{ border-color: rgba(245,158,11,.35); background: rgba(245,158,11,.12); }
+    .toast.bad .tIcon{ border-color: rgba(239,68,68,.35); background: rgba(239,68,68,.12); }
+    .toast h4{ margin:0; font-size:13px; font-weight:1000; }
+    .toast p{ margin:4px 0 0; font-size:12px; color: var(--muted); line-height:1.35; }
+
+    .kbd{
+      font-size:11px;
+      padding:2px 6px;
+      border-radius:8px;
+      border:1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.04);
+      color: rgba(231,238,248,.9);
+    }
+
+    @media (max-width: 980px){
+      .app{ flex-direction:column; }
+      .side{ width:100%; max-width:none; height:46vh; border-right:none; border-bottom:1px solid var(--line); }
+      #map{ height:54vh; }
+      .payCard{ grid-template-columns: 1fr; }
+      .payRight{ border-left:none; border-top:1px solid rgba(255,255,255,.10); }
+      .toasts{ right:10px; left:10px; }
+      .toast{ max-width: none; }
+    }
+  </style>
 </head>
+
 <body>
 
-    <section id="hero-section">
-        <div class="hero-content">
-            <h1>Norge<span style="color:var(--brand);">.</span></h1>
-            <p>Den ultimate plattformen for å loggføre, utforske og planlegge ekspedisjoner i norsk natur.</p>
-            <button class="btn btn-main" onclick="enterApp()">
-                Begynn utforskning <i class="fa-solid fa-arrow-right"></i>
-            </button>
+<div id="paywall" class="paywall" aria-modal="true" role="dialog">
+  <div class="payCard">
+    <div class="payLeft">
+      <div class="brand" style="margin-bottom:10px">
+        <div class="logo"></div>
+        <div>
+          <div style="font-weight:1000">Norge Reise</div>
+          <div style="font-size:12px; color:var(--muted2)">Oppdag og del de beste reisemålene</div>
         </div>
-    </section>
+      </div>
 
-    <div class="app-container">
-        <aside class="sidebar">
-            <div class="sidebar-nav">
-                <div class="logo"><i class="fa-solid fa-compass"></i> EXPLORER</div>
-                <button class="btn-delete" style="background:none; border:none; cursor:pointer;" onclick="exitApp()">
-                    <i class="fa-solid fa-right-from-bracket"></i>
-                </button>
-            </div>
+      <h2 class="payTitle">Lås opp kartet (Mega demo)</h2>
+      <div class="paySub">
+        Velg modus for å gå inn. Tips: trykk <span class="kbd">Esc</span> for å lukke modal, og bruk “Finn meg”.
+      </div>
 
-            <div class="sidebar-scroll">
-                <div class="stats-grid">
-                    <div class="stat-box">
-                        <small>Destinasjoner</small>
-                        <div id="count-dest">0</div>
-                    </div>
-                    <div class="stat-box">
-                        <small>Kategorier</small>
-                        <div id="count-cat">0</div>
-                    </div>
-                </div>
-
-                <div class="search-wrapper">
-                    <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" id="search" class="search-input" placeholder="Søk i dine steder..." oninput="renderAll()">
-                </div>
-
-                <div class="list-header">Dine lagrede steder</div>
-                <div id="location-list">
-                    </div>
-            </div>
-        </aside>
-
-        <main id="map-wrapper">
-            <div id="map"></div>
-
-            <div id="add-panel" class="add-panel">
-                <div class="panel-header">
-                    <h3 style="font-weight: 800;">Lagre destinasjon</h3>
-                    <i class="fa-solid fa-xmark" style="cursor:pointer;" onclick="closePanel()"></i>
-                </div>
-                
-                <div id="image-drop" class="image-preview">
-                    <i class="fa-solid fa-camera fa-2x" style="color:var(--text-muted)"></i>
-                    <input type="file" id="file-input" style="display:none" accept="image/*">
-                </div>
-
-                <label>Navn på destinasjon</label>
-                <input type="text" id="in-name" placeholder="F.eks. Preikestolen">
-
-                <label>Beskrivelse</label>
-                <textarea id="in-desc" rows="3" placeholder="Hva gjør dette stedet unikt?"></textarea>
-
-                <label>Kategori</label>
-                <select id="in-cat">
-                    <option value="Topptur">Topptur</option>
-                    <option value="Fiske">Fiske</option>
-                    <option value="Kultur">Kultur</option>
-                    <option value="Camping">Camping</option>
-                    <option value="Utsikt">Utsikt</option>
-                </select>
-
-                <div id="coord-display" style="font-size: 0.75rem; color: var(--brand); margin-bottom: 20px; font-family: monospace;">
-                    Koordinater: -- , --
-                </div>
-
-                <button class="btn btn-main" style="width:100%; justify-content: center;" onclick="saveEntry()">
-                    Lagre i bibliotek
-                </button>
-            </div>
-        </main>
+      <ul class="payBullets">
+        <li>Legg inn steder med bilde, tips og ⭐ vurdering</li>
+        <li>Filter: kategori, admin, favoritter, sortering</li>
+        <li>Import / Export JSON + lagring i nettleser</li>
+        <li>Rediger / Slett + Undo / Redo</li>
+        <li>Delbar link til destinasjon + åpne i Google Maps</li>
+      </ul>
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        let map, markers = [], pendingCoord = null, currentImageData = null;
-        let dataStore = JSON.parse(localStorage.getItem('explorer_data_v4')) || [];
+    <div class="payRight">
+      <div class="payBox">
+        <h3>Abonnement</h3>
+        <div class="price">79 kr / mnd</div>
+        <div class="fine">(Demo) Klikk for å gå inn.</div>
 
-        function enterApp() {
-            document.body.classList.add('app-active');
-            setTimeout(initMap, 800);
+        <div class="sep"></div>
+
+        <div class="row">
+          <button class="btn warn" id="enterAsAdminBtn">Fortsett som Admin</button>
+          <button class="btn primary" id="enterAsUserBtn">Fortsett som Bruker</button>
+        </div>
+
+        <div class="note">Admin kan merke “Admin valg”, og redigere/slette alt.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="app" id="app" style="display:none;">
+  <aside class="side">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo"></div>
+        <div style="min-width:0">
+          <h1>Oppdag Norge</h1>
+          <div class="sub">Utforsk, lagre og del de beste reisemålene</div>
+        </div>
+      </div>
+
+      <div class="spacer"></div>
+
+      <span class="pill" title="Modus">
+        <span id="adminDot" class="dot"></span>
+        <span><strong id="modeLabel">Bruker</strong></span>
+      </span>
+
+      <button class="btn primary" id="addBtn">+ Legg til</button>
+      <button class="btn ghost" id="lockBtn">Lås</button>
+    </div>
+
+    <div class="section">
+      <div class="row">
+        <input class="grow" id="q" placeholder="Søk (navn / sted / tips / beskrivelse)" />
+        <select id="cat" style="max-width:180px">
+          <option value="">Alle</option>
+          <option value="natur">Natur</option>
+          <option value="kultur">Kultur</option>
+          <option value="aktiviteter">Aktiviteter</option>
+          <option value="mat">Mat</option>
+          <option value="overnatting">Overnatting</option>
+          <option value="shopping">Shopping</option>
+          <option value="utsikt">Utsikt</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <select id="sort">
+          <option value="relevance">Sorter: Relevans</option>
+          <option value="newest">Sorter: Nyeste</option>
+          <option value="rating_desc">Sorter: Rating (høy→lav)</option>
+          <option value="name_asc">Sorter: Navn (A→Å)</option>
+          <option value="distance_asc">Sorter: Avstand (nærmest)</option>
+        </select>
+        <button class="btn" id="locateBtn" title="Finn min posisjon">📍 Finn meg</button>
+      </div>
+
+      <div class="toggles">
+        <label class="toggle" title="Vis kun admin-valg">
+          <input type="checkbox" id="onlyAdmin" />
+          <strong>Kun Admin valg</strong>
+        </label>
+        <label class="toggle" title="Vis bare favoritter">
+          <input type="checkbox" id="onlyFav" />
+          <strong>Favoritter</strong>
+        </label>
+      </div>
+
+      <div class="chips" id="chips"></div>
+      <div class="help" id="tileStatus"></div>
+      <div class="help" id="geoStatus"></div>
+
+      <div class="row" style="margin-top:10px;">
+        <button class="btn" id="exportBtn">Eksport JSON</button>
+        <button class="btn" id="importBtn">Import JSON</button>
+        <button class="btn" id="undoBtn" title="Angre">↶ Undo</button>
+        <button class="btn" id="redoBtn" title="Gjør om">↷ Redo</button>
+      </div>
+
+      <div class="help">
+        Tips: Du kan dele en destinasjon med “Del” i detaljvisning. Data lagres lokalt i nettleseren.
+      </div>
+    </div>
+
+    <div class="list" id="list"></div>
+  </aside>
+
+  <div id="map" aria-label="Kart"></div>
+</div>
+
+<!-- Modal: Add/Edit -->
+<div class="overlay" id="overlay" aria-modal="true" role="dialog">
+  <div class="modal" role="document">
+    <div class="modalHeader">
+      <div>
+        <h2 id="modalTitle">Legg til ny destinasjon</h2>
+        <div class="small" id="modalCoord">Klikk på kartet for å velge plassering</div>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn ghost" id="closeModal" aria-label="Lukk">✕</button>
+    </div>
+
+    <div class="modalBody">
+      <div class="grid">
+        <div>
+          <div class="label">Navn *</div>
+          <input id="f_name" placeholder="F.eks. Preikestolen" />
+        </div>
+
+        <div>
+          <div class="label">Stedsnavn (valgfritt)</div>
+          <input id="f_place" placeholder="F.eks. Stavanger, Rogaland" />
+        </div>
+
+        <div class="full">
+          <div class="label">Beskrivelse *</div>
+          <textarea id="f_desc" placeholder="Beskriv destinasjonen..."></textarea>
+        </div>
+
+        <div>
+          <div class="label">Kategori *</div>
+          <select id="f_cat">
+            <option value="natur">Natur</option>
+            <option value="kultur">Kultur</option>
+            <option value="aktiviteter">Aktiviteter</option>
+            <option value="mat">Mat</option>
+            <option value="overnatting">Overnatting</option>
+            <option value="shopping">Shopping</option>
+            <option value="utsikt">Utsikt</option>
+          </select>
+        </div>
+
+        <div>
+          <div class="label">Beste sesong *</div>
+          <select id="f_season">
+            <option value="hele_året">Hele året</option>
+            <option value="vår">Vår</option>
+            <option value="sommer">Sommer</option>
+            <option value="høst">Høst</option>
+            <option value="vinter">Vinter</option>
+          </select>
+        </div>
+
+        <div>
+          <div class="label">Vurdering</div>
+          <div class="stars" id="stars">
+            <span class="star" data-v="1">★</span>
+            <span class="star" data-v="2">★</span>
+            <span class="star" data-v="3">★</span>
+            <span class="star" data-v="4">★</span>
+            <span class="star" data-v="5">★</span>
+            <span class="starVal" id="starVal">Ikke valgt</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="label">Bilde (valgfritt)</div>
+          <input type="file" id="f_file" accept="image/*" />
+          <div class="help">Opplasting er lokal preview i demoen.</div>
+        </div>
+
+        <div class="full">
+          <div class="label">Bilde-URL (valgfritt)</div>
+          <input id="f_img" placeholder="https://..." />
+        </div>
+
+        <div class="full">
+          <div class="label">Tips (valgfritt)</div>
+          <textarea id="f_tips" placeholder="Parkering, beste tidspunkt, osv."></textarea>
+        </div>
+
+        <div class="full" id="adminPickWrap" style="display:none;">
+          <label class="toggle" style="width:fit-content;">
+            <input type="checkbox" id="f_adminpick" />
+            <strong>Merk som “Admin valg”</strong>
+          </label>
+        </div>
+
+        <div class="full">
+          <div class="row">
+            <button class="btn" id="cancelAdd">Avbryt</button>
+            <button class="btn primary" id="saveAdd">Lagre</button>
+          </div>
+          <div class="help" id="saveHelp"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Details -->
+<div class="overlay" id="detailsOverlay" aria-modal="true" role="dialog">
+  <div class="modal" role="document">
+    <div class="modalHeader">
+      <div>
+        <h2 id="detailsTitle">Detaljer</h2>
+        <div class="small" id="detailsSub">—</div>
+      </div>
+      <div class="spacer"></div>
+      <button class="btn ghost" id="closeDetails" aria-label="Lukk">✕</button>
+    </div>
+
+    <div class="modalBody" id="detailsBody">
+      <!-- Filled by JS -->
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+/* ============================================================
+   Mega Demo – single file app
+   ============================================================ */
+
+(() => {
+  "use strict";
+
+  /* ----------------------------
+     Utilities
+  ---------------------------- */
+  const $ = (sel, root=document) => root.querySelector(sel);
+  const $$ = (sel, root=document) => Array.from(root.querySelectorAll(sel));
+
+  function uid(){ return (crypto?.randomUUID?.() || ("id_" + Math.random().toString(16).slice(2))); }
+
+  function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+  function round(n, d=2){ const p = 10**d; return Math.round(n*p)/p; }
+
+  function escapeHtml(str){
+    return String(str ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  function seasonLabel(v){
+    return ({
+      "hele_året":"Hele året",
+      "vår":"Vår",
+      "sommer":"Sommer",
+      "høst":"Høst",
+      "vinter":"Vinter"
+    }[v] || v);
+  }
+
+  function categoryLabel(v){
+    return ({
+      "natur":"Natur",
+      "kultur":"Kultur",
+      "aktiviteter":"Aktiviteter",
+      "mat":"Mat",
+      "overnatting":"Overnatting",
+      "shopping":"Shopping",
+      "utsikt":"Utsikt"
+    }[v] || v);
+  }
+
+  function starsText(n){
+    if(!n) return "";
+    const r = clamp(Math.round(n), 1, 5);
+    return "★★★★★".slice(0,r) + "☆☆☆☆☆".slice(0,5-r);
+  }
+
+  // Haversine distance in km
+  function distanceKm(lat1, lon1, lat2, lon2){
+    const R = 6371;
+    const dLat = (lat2-lat1) * Math.PI/180;
+    const dLon = (lon2-lon1) * Math.PI/180;
+    const a =
+      Math.sin(dLat/2)**2 +
+      Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) *
+      Math.sin(dLon/2)**2;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R*c;
+  }
+
+  function safeParseJSON(txt){
+    try { return { ok:true, value: JSON.parse(txt) }; }
+    catch(e){ return { ok:false, error: String(e) }; }
+  }
+
+  function downloadText(filename, text){
+    const blob = new Blob([text], {type:"application/json;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function toast(type, title, message, ms=3200){
+    const toasts = $("#toasts");
+    const el = document.createElement("div");
+    el.className = `toast ${type}`;
+    const icon = type==="ok" ? "✓" : type==="warn" ? "!" : "×";
+    el.innerHTML = `
+      <div class="tRow">
+        <div class="tIcon">${icon}</div>
+        <div style="min-width:0">
+          <h4>${escapeHtml(title)}</h4>
+          <p>${escapeHtml(message)}</p>
+        </div>
+      </div>
+    `;
+    toasts.appendChild(el);
+    setTimeout(() => {
+      el.style.opacity = "0";
+      el.style.transform = "translateY(6px)";
+      el.style.transition = "opacity .18s ease, transform .18s ease";
+      setTimeout(() => el.remove(), 220);
+    }, ms);
+  }
+
+  /* ----------------------------
+     Storage + State
+  ---------------------------- */
+  const LS_KEYS = {
+    places: "mega_places_v1",
+    favs: "mega_favs_v1",
+    mode: "mega_mode_v1",
+    history: "mega_history_v1"
+  };
+
+  const DEFAULT_PLACES = [
+    {
+      id: uid(),
+      title: "Bryggen",
+      place_name: "Bergen",
+      description: "Historisk havnefront med fargerike trehus og smale smug.",
+      category: "kultur",
+      season: "hele_året",
+      rating: 5,
+      image_url: "https://commons.wikimedia.org/wiki/Special:FilePath/Bryggen%20Bergen.jpg",
+      tips: "Best tidlig morgen eller kveld.",
+      lat: 60.3971,
+      lon: 5.3249,
+      is_admin_pick: true,
+      created_at: Date.now() - 1000*60*60*24*18,
+      updated_at: Date.now() - 1000*60*60*24*12
+    },
+    {
+      id: uid(),
+      title: "Ravnåsen utsiktspunkt",
+      place_name: "Sandefjord",
+      description: "Skogkledd høyde med flott utsikt over Sandefjord og fjorden.",
+      category: "utsikt",
+      season: "hele_året",
+      rating: 4,
+      image_url: "",
+      tips: "Fin kveldstur med solnedgang.",
+      lat: 59.1346,
+      lon: 10.2169,
+      is_admin_pick: false,
+      created_at: Date.now() - 1000*60*60*24*4,
+      updated_at: Date.now() - 1000*60*60*24*4
+    }
+  ];
+
+  const CATEGORIES = [
+    { key:"natur", label:"Natur" },
+    { key:"kultur", label:"Kultur" },
+    { key:"aktiviteter", label:"Aktiviteter" },
+    { key:"mat", label:"Mat" },
+    { key:"overnatting", label:"Overnatting" },
+    { key:"shopping", label:"Shopping" },
+    { key:"utsikt", label:"Utsikt" }
+  ];
+
+  const state = {
+    isUnlocked: false,
+    isAdmin: false,
+    activeChip: "",
+    pendingLatLng: null,
+    tempPin: null,
+    ratingVal: null,
+    fileObjectUrl: "",
+    editingId: null,
+
+    places: [],
+    favs: new Set(),
+
+    // map / geo
+    map: null,
+    mapReady: false,
+    markers: new Map(),
+    userMarker: null,
+    userLatLng: null,
+
+    // undo/redo history
+    undoStack: [],
+    redoStack: []
+  };
+
+  function loadState(){
+    const placesTxt = localStorage.getItem(LS_KEYS.places);
+    const favsTxt = localStorage.getItem(LS_KEYS.favs);
+    const modeTxt = localStorage.getItem(LS_KEYS.mode);
+
+    if(placesTxt){
+      const p = safeParseJSON(placesTxt);
+      state.places = (p.ok && Array.isArray(p.value)) ? p.value : DEFAULT_PLACES.slice();
+    } else {
+      state.places = DEFAULT_PLACES.slice();
+    }
+
+    if(favsTxt){
+      const f = safeParseJSON(favsTxt);
+      if(f.ok && Array.isArray(f.value)) state.favs = new Set(f.value);
+    }
+
+    if(modeTxt){
+      const m = safeParseJSON(modeTxt);
+      if(m.ok && typeof m.value?.isAdmin === "boolean"){
+        state.isAdmin = m.value.isAdmin;
+      }
+    }
+  }
+
+  function savePlaces(){
+    localStorage.setItem(LS_KEYS.places, JSON.stringify(state.places));
+  }
+  function saveFavs(){
+    localStorage.setItem(LS_KEYS.favs, JSON.stringify(Array.from(state.favs)));
+  }
+  function saveMode(){
+    localStorage.setItem(LS_KEYS.mode, JSON.stringify({ isAdmin: state.isAdmin }));
+  }
+
+  function snapshot(){
+    // deep clone minimal
+    return {
+      places: JSON.parse(JSON.stringify(state.places)),
+      favs: Array.from(state.favs)
+    };
+  }
+
+  function pushHistory(reason="Endring"){
+    // store snapshot for undo
+    state.undoStack.push({ reason, snap: snapshot(), at: Date.now() });
+    if(state.undoStack.length > 50) state.undoStack.shift();
+    state.redoStack = [];
+    updateUndoRedoButtons();
+  }
+
+  function restoreSnapshot(snap){
+    state.places = JSON.parse(JSON.stringify(snap.places || []));
+    state.favs = new Set(snap.favs || []);
+    savePlaces();
+    saveFavs();
+    render();
+    toast("ok","Gjenopprettet", "Endringen ble gjenopprettet.");
+  }
+
+  function undo(){
+    if(!state.undoStack.length) return;
+    const current = snapshot();
+    const last = state.undoStack.pop();
+    state.redoStack.push({ reason:last.reason, snap: current, at: Date.now() });
+    restoreSnapshot(last.snap);
+    updateUndoRedoButtons();
+  }
+  function redo(){
+    if(!state.redoStack.length) return;
+    const current = snapshot();
+    const next = state.redoStack.pop();
+    state.undoStack.push({ reason:next.reason, snap: current, at: Date.now() });
+    restoreSnapshot(next.snap);
+    updateUndoRedoButtons();
+  }
+
+  /* ----------------------------
+     DOM refs
+  ---------------------------- */
+  const paywallEl = $("#paywall");
+  const appEl = $("#app");
+  const adminDot = $("#adminDot");
+  const modeLabel = $("#modeLabel");
+  const adminPickWrap = $("#adminPickWrap");
+
+  const overlay = $("#overlay");
+  const detailsOverlay = $("#detailsOverlay");
+
+  const qEl = $("#q");
+  const catEl = $("#cat");
+  const sortEl = $("#sort");
+  const onlyAdminEl = $("#onlyAdmin");
+  const onlyFavEl = $("#onlyFav");
+  const chipsEl = $("#chips");
+  const listEl = $("#list");
+  const tileStatus = $("#tileStatus");
+  const geoStatus = $("#geoStatus");
+
+  const addBtn = $("#addBtn");
+  const lockBtn = $("#lockBtn");
+  const locateBtn = $("#locateBtn");
+  const exportBtn = $("#exportBtn");
+  const importBtn = $("#importBtn");
+  const undoBtn = $("#undoBtn");
+  const redoBtn = $("#redoBtn");
+
+  // modal fields
+  const modalTitle = $("#modalTitle");
+  const modalCoord = $("#modalCoord");
+  const closeModalBtn = $("#closeModal");
+  const cancelAddBtn = $("#cancelAdd");
+  const saveAddBtn = $("#saveAdd");
+  const saveHelp = $("#saveHelp");
+
+  const f_name = $("#f_name");
+  const f_place = $("#f_place");
+  const f_desc = $("#f_desc");
+  const f_cat = $("#f_cat");
+  const f_season = $("#f_season");
+  const f_img = $("#f_img");
+  const f_tips = $("#f_tips");
+  const f_file = $("#f_file");
+  const f_adminpick = $("#f_adminpick");
+
+  const stars = $$(".star");
+  const starValEl = $("#starVal");
+
+  // details modal
+  const detailsTitle = $("#detailsTitle");
+  const detailsSub = $("#detailsSub");
+  const detailsBody = $("#detailsBody");
+  const closeDetailsBtn = $("#closeDetails");
+
+  /* ----------------------------
+     Map setup (init after unlock)
+  ---------------------------- */
+  function addTiles(url, label){
+    const layer = L.tileLayer(url, { attribution:"© OpenStreetMap" });
+    layer.addTo(state.map);
+    tileStatus.textContent = `Kartkilde: ${label}`;
+    tileStatus.style.color = "rgba(231,238,248,.75)";
+
+    let err = 0;
+    layer.on("tileerror", () => {
+      err++;
+      if(err >= 3){
+        try { state.map.removeLayer(layer); } catch {}
+        tileStatus.textContent = "Kartfliser feilet – bytter kartkilde…";
+        tileStatus.style.color = "#ffd18a";
+        addTiles("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", "OSM Standard");
+      }
+    });
+  }
+
+  function initMap(){
+    if(state.mapReady) return;
+
+    state.map = L.map("map", { zoomControl:true }).setView([59.20, 10.25], 5);
+    addTiles("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", "OSM HOT");
+
+    // Click while modal open: set point
+    state.map.on("click", (e) => {
+      if(overlay.style.display !== "flex") return;
+      state.pendingLatLng = e.latlng;
+      modalCoord.textContent = `Valgt posisjon: ${state.pendingLatLng.lat.toFixed(5)}, ${state.pendingLatLng.lng.toFixed(5)}`;
+      if(state.tempPin) state.map.removeLayer(state.tempPin);
+      state.tempPin = L.marker([state.pendingLatLng.lat, state.pendingLatLng.lng]).addTo(state.map);
+      toast("ok","Posisjon valgt", "Klikk Lagre for å lagre destinasjonen.", 1400);
+    });
+
+    // Deep-link open: hash change
+    window.addEventListener("hashchange", () => {
+      const id = (location.hash || "").replace("#place=", "");
+      if(id) openDetailsById(id);
+    });
+
+    state.mapReady = true;
+  }
+
+  function forceMapResize(){
+    if(!state.mapReady) return;
+    requestAnimationFrame(() => {
+      state.map.invalidateSize(true);
+      requestAnimationFrame(() => state.map.invalidateSize(true));
+    });
+  }
+  window.addEventListener("resize", forceMapResize);
+
+  /* ----------------------------
+     Markers
+  ---------------------------- */
+  function popupHtml(d){
+    const img = d.image_url ? `<img class="thumb" src="${escapeHtml(d.image_url)}" alt="">` : "";
+    const rating = d.rating ? ` <span style="color:var(--gold);font-weight:1000">${starsText(d.rating)}</span> <span style="opacity:.7">(${d.rating}/5)</span>` : "";
+    const admin = d.is_admin_pick ? `<span class="badge admin">Admin valg</span>` : "";
+    const fav = state.favs.has(d.id) ? `<span class="badge fav">★ Favoritt</span>` : "";
+    const place = d.place_name ? `<span class="badge">${escapeHtml(d.place_name)}</span>` : "";
+    return `
+      <div style="max-width:320px">
+        <div style="font-weight:1000;font-size:14px">${escapeHtml(d.title)}${rating}</div>
+        <div style="margin-top:6px;opacity:.88;line-height:1.35">${escapeHtml(d.description)}</div>
+        <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px">
+          ${admin}${fav}
+          <span class="badge">${escapeHtml(categoryLabel(d.category))}</span>
+          <span class="badge">${escapeHtml(seasonLabel(d.season))}</span>
+          ${place}
+        </div>
+        ${img}
+        ${d.tips ? `<div style="margin-top:8px;opacity:.9"><em>${escapeHtml(d.tips)}</em></div>` : ``}
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" onclick="window.__openDetails('${d.id}')">Detaljer</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function ensureMarker(d){
+    if(state.markers.has(d.id)) return state.markers.get(d.id);
+    const m = L.marker([d.lat, d.lon]).addTo(state.map).bindPopup(popupHtml(d));
+    state.markers.set(d.id, m);
+    return m;
+  }
+
+  function clearMarkers(){
+    for(const m of state.markers.values()) state.map.removeLayer(m);
+    state.markers.clear();
+  }
+
+  function refreshMarkerPopup(d){
+    const m = state.markers.get(d.id);
+    if(!m) return;
+    m.setPopupContent(popupHtml(d));
+  }
+
+  /* ----------------------------
+     Filters / Sorting
+  ---------------------------- */
+  function relevanceScore(d, query){
+    if(!query) return 0;
+    const hay = `${d.title} ${d.description} ${d.tips||""} ${d.place_name||""}`.toLowerCase();
+    const q = query.toLowerCase().trim();
+    if(!q) return 0;
+    // simple scoring: title match high, description medium
+    let s = 0;
+    if(d.title.toLowerCase().includes(q)) s += 6;
+    if((d.place_name||"").toLowerCase().includes(q)) s += 4;
+    if((d.tips||"").toLowerCase().includes(q)) s += 2;
+    if(hay.includes(q)) s += 1;
+    // rating bump
+    if(d.rating) s += d.rating * 0.2;
+    // admin bump
+    if(d.is_admin_pick) s += 0.6;
+    return s;
+  }
+
+  function filteredPlaces(){
+    const q = qEl.value.trim().toLowerCase();
+    const cat = catEl.value;
+    const onlyAdmin = onlyAdminEl.checked;
+    const onlyFav = onlyFavEl.checked;
+
+    let items = state.places.filter(d => {
+      const text = `${d.title} ${d.description} ${d.tips||""} ${d.place_name||""}`.toLowerCase();
+      return (!q || text.includes(q)) &&
+             (!cat || d.category === cat) &&
+             (!onlyAdmin || d.is_admin_pick) &&
+             (!onlyFav || state.favs.has(d.id));
+    });
+
+    // sort
+    const sort = sortEl.value;
+    if(sort === "newest"){
+      items.sort((a,b) => (b.created_at||0) - (a.created_at||0));
+    } else if(sort === "rating_desc"){
+      items.sort((a,b) => (b.rating||0) - (a.rating||0) || (b.created_at||0)-(a.created_at||0));
+    } else if(sort === "name_asc"){
+      items.sort((a,b) => a.title.localeCompare(b.title, "no"));
+    } else if(sort === "distance_asc"){
+      if(state.userLatLng){
+        items.sort((a,b) => {
+          const da = distanceKm(state.userLatLng.lat, state.userLatLng.lng, a.lat, a.lon);
+          const db = distanceKm(state.userLatLng.lat, state.userLatLng.lng, b.lat, b.lon);
+          return da - db;
+        });
+      }
+    } else { // relevance
+      if(q){
+        items.sort((a,b) => relevanceScore(b,q) - relevanceScore(a,q));
+      }
+    }
+    return items;
+  }
+
+  /* ----------------------------
+     Chips
+  ---------------------------- */
+  function renderChips(){
+    chipsEl.innerHTML = "";
+
+    const mk = (label, active, onclick) => {
+      const el = document.createElement("div");
+      el.className = "chip " + (active ? "active" : "");
+      el.textContent = label;
+      el.onclick = onclick;
+      chipsEl.appendChild(el);
+    };
+
+    mk("Alle", state.activeChip==="", () => {
+      state.activeChip="";
+      catEl.value="";
+      render();
+    });
+
+    for(const c of CATEGORIES){
+      mk(c.label, state.activeChip===c.key, () => {
+        state.activeChip = c.key;
+        catEl.value = c.key;
+        render();
+      });
+    }
+  }
+
+  /* ----------------------------
+     UI render
+  ---------------------------- */
+  function updateModeUI(){
+    adminDot.classList.toggle("on", state.isAdmin);
+    modeLabel.textContent = state.isAdmin ? "Admin" : "Bruker";
+    adminPickWrap.style.display = state.isAdmin ? "block" : "none";
+    saveMode();
+  }
+
+  function updateUndoRedoButtons(){
+    undoBtn.disabled = state.undoStack.length === 0;
+    redoBtn.disabled = state.redoStack.length === 0;
+  }
+
+  function render(){
+    if(!state.isUnlocked || !state.mapReady) return;
+
+    renderChips();
+    const items = filteredPlaces();
+
+    // markers
+    clearMarkers();
+    items.forEach(d => ensureMarker(d));
+
+    // list
+    listEl.innerHTML = "";
+    if(!items.length){
+      listEl.innerHTML = `<div style="opacity:.75;padding:8px;">Ingen treff.</div>`;
+    } else {
+      for(const d of items){
+        const card = document.createElement("div");
+        card.className = "card";
+
+        let distBadge = "";
+        if(state.userLatLng){
+          const km = distanceKm(state.userLatLng.lat, state.userLatLng.lng, d.lat, d.lon);
+          distBadge = `<span class="badge km">${round(km,1)} km</span>`;
         }
 
-        function exitApp() {
-            document.body.classList.remove('app-active');
-        }
+        const favOn = state.favs.has(d.id);
+        card.innerHTML = `
+          <div class="titleRow">
+            <div class="title">${escapeHtml(d.title)}</div>
+            <button class="iconBtn fav ${favOn ? "on":""}" data-fav="${d.id}" title="Favoritt">★</button>
+            <button class="iconBtn" data-open="${d.id}" title="Detaljer">ℹ</button>
+          </div>
+          <div class="meta">
+            ${d.is_admin_pick ? `<span class="badge admin">Admin valg</span>` : ``}
+            ${favOn ? `<span class="badge fav">Favoritt</span>` : ``}
+            <span class="badge">${escapeHtml(categoryLabel(d.category))}</span>
+            <span class="badge">${escapeHtml(seasonLabel(d.season))}</span>
+            ${d.place_name ? `<span class="badge">${escapeHtml(d.place_name)}</span>` : ``}
+            ${d.rating ? `<span class="badge">⭐ ${d.rating}/5</span>` : ``}
+            ${distBadge}
+          </div>
+          <div class="desc">${escapeHtml(d.description)}</div>
+          ${d.image_url ? `<img class="thumb" src="${escapeHtml(d.image_url)}" alt="">` : ``}
+        `;
 
-        function initMap() {
-            if (map) return;
-            
-            // Moderne vibrante tiles (Standard OSM med custom filter via CSS hvis ønskelig, men her bruker vi ren Voyager)
-            map = L.map('map', { 
-                zoomControl: false,
-                attributionControl: false 
-            }).setView([62.0, 9.5], 6);
+        // card click: center map + open popup
+        card.addEventListener("click", (ev) => {
+          const target = ev.target;
+          if(target && target.closest && (target.closest("[data-fav]") || target.closest("[data-open]"))) return;
+          const m = ensureMarker(d);
+          state.map.setView([d.lat, d.lon], 15);
+          m.openPopup();
+        });
 
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-                maxZoom: 19
-            }).addTo(map);
+        // fav button
+        card.querySelector("[data-fav]")?.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          toggleFav(d.id);
+        });
 
-            L.control.zoom({ position: 'bottomright' }).addTo(map);
+        // details button
+        card.querySelector("[data-open]")?.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          openDetails(d.id);
+        });
 
-            // Høyreklikk eller vanlig klikk for å legge til
-            map.on('click', (e) => {
-                openPanel(e.latlng);
-            });
+        listEl.appendChild(card);
+      }
+    }
 
-            renderAll();
-        }
+    // update hash deep link if exists
+    if(location.hash.startsWith("#place=")){
+      const id = location.hash.replace("#place=","");
+      if(id && !state.places.find(x => x.id === id)){
+        history.replaceState(null,"", location.pathname + location.search);
+      }
+    }
 
-        function openPanel(latlng) {
-            pendingCoord = latlng;
-            document.getElementById('add-panel').style.display = 'block';
-            document.getElementById('coord-display').innerText = `Koordinater: ${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}`;
-            document.getElementById('in-name').focus();
-        }
+    forceMapResize();
+  }
 
-        function closePanel() {
-            document.getElementById('add-panel').style.display = 'none';
-            pendingCoord = null;
-            currentImageData = null;
-            document.getElementById('image-drop').style.backgroundImage = 'none';
-            document.getElementById('image-drop').innerHTML = '<i class="fa-solid fa-camera fa-2x" style="color:var(--text-muted)"></i>';
-        }
+  /* ----------------------------
+     Favorites
+  ---------------------------- */
+  function toggleFav(id){
+    if(state.favs.has(id)){
+      state.favs.delete(id);
+      toast("warn","Favoritt", "Fjernet fra favoritter.", 1400);
+    } else {
+      state.favs.add(id);
+      toast("ok","Favoritt", "Lagt til i favoritter.", 1400);
+    }
+    saveFavs();
+    const d = state.places.find(x => x.id===id);
+    if(d) refreshMarkerPopup(d);
+    render();
+  }
 
-        // Bilde-opplasting logikk (Base64 for LocalStorage demo)
-        document.getElementById('image-drop').onclick = () => document.getElementById('file-input').click();
-        document.getElementById('file-input').onchange = (e) => {
-            const file = e.target.files[0];
-            const reader = new FileReader();
-            reader.onload = () => {
-                currentImageData = reader.result;
-                document.getElementById('image-drop').innerHTML = '';
-                document.getElementById('image-drop').style.backgroundImage = `url(${currentImageData})`;
-            };
-            if(file) reader.readAsDataURL(file);
-        };
+  /* ----------------------------
+     Modals (Add/Edit)
+  ---------------------------- */
+  function setRating(v){
+    state.ratingVal = v;
+    stars.forEach(s => s.classList.toggle("on", Number(s.dataset.v) <= v));
+    starValEl.textContent = v ? `${v}/5` : "Ikke valgt";
+  }
+  stars.forEach(s => s.addEventListener("click", () => setRating(Number(s.dataset.v))));
+  setRating(null);
 
-        function saveEntry() {
-            const name = document.getElementById('in-name').value;
-            const desc = document.getElementById('in-desc').value;
-            const cat = document.getElementById('in-cat').value;
+  function openAddModal(editId=null){
+    state.editingId = editId;
+    saveHelp.textContent = "";
+    saveHelp.style.color = "";
 
-            if(!name || !pendingCoord) return alert("Vennligst fyll ut navn og velg et punkt.");
+    // clear temp pin
+    state.pendingLatLng = null;
+    if(state.tempPin && state.mapReady){ state.map.removeLayer(state.tempPin); state.tempPin = null; }
 
-            const entry = {
-                id: Date.now(),
-                name, desc, cat,
-                lat: pendingCoord.lat,
-                lng: pendingCoord.lng,
-                img: currentImageData
-            };
+    if(state.fileObjectUrl){
+      URL.revokeObjectURL(state.fileObjectUrl);
+      state.fileObjectUrl = "";
+    }
+    f_file.value = "";
 
-            dataStore.unshift(entry);
-            sync();
-            
-            // Reset fields
-            document.getElementById('in-name').value = '';
-            document.getElementById('in-desc').value = '';
-            closePanel();
-        }
+    if(editId){
+      const d = state.places.find(x => x.id===editId);
+      if(!d){ toast("bad","Feil","Fant ikke destinasjonen."); return; }
+      modalTitle.textContent = "Rediger destinasjon";
+      f_name.value = d.title || "";
+      f_place.value = d.place_name || "";
+      f_desc.value = d.description || "";
+      f_cat.value = d.category || "natur";
+      f_season.value = d.season || "hele_året";
+      f_img.value = d.image_url || "";
+      f_tips.value = d.tips || "";
+      setRating(d.rating || null);
+      if(state.isAdmin) f_adminpick.checked = !!d.is_admin_pick;
 
-        function deleteEntry(id, e) {
-            e.stopPropagation();
-            if(!confirm("Slette denne destinasjonen?")) return;
-            dataStore = dataStore.filter(i => i.id !== id);
-            sync();
-        }
+      state.pendingLatLng = L.latLng(d.lat, d.lon);
+      modalCoord.textContent = `Nåværende posisjon: ${d.lat.toFixed(5)}, ${d.lon.toFixed(5)} (klikk kartet for ny)`;
+      state.tempPin = L.marker([d.lat, d.lon]).addTo(state.map);
+    } else {
+      modalTitle.textContent = "Legg til ny destinasjon";
+      f_name.value = "";
+      f_place.value = "";
+      f_desc.value = "";
+      f_cat.value = "natur";
+      f_season.value = "hele_året";
+      f_img.value = "";
+      f_tips.value = "";
+      if(state.isAdmin) f_adminpick.checked = false;
+      setRating(null);
+      modalCoord.textContent = "Klikk på kartet for å velge plassering";
+    }
 
-        function sync() {
-            localStorage.setItem('explorer_data_v4', JSON.stringify(dataStore));
-            renderAll();
-        }
+    overlay.style.display = "flex";
+    requestAnimationFrame(() => {
+      forceMapResize();
+      f_name.focus();
+    });
+  }
 
-        function renderAll() {
-            const list = document.getElementById('location-list');
-            const query = document.getElementById('search').value.toLowerCase();
-            const filtered = dataStore.filter(i => i.name.toLowerCase().includes(query) || i.desc.toLowerCase().includes(query));
+  function closeAddModal(){
+    overlay.style.display = "none";
+    state.editingId = null;
+    state.pendingLatLng = null;
+    if(state.tempPin && state.mapReady){ state.map.removeLayer(state.tempPin); state.tempPin = null; }
+    if(state.fileObjectUrl){ URL.revokeObjectURL(state.fileObjectUrl); state.fileObjectUrl=""; }
+    requestAnimationFrame(forceMapResize);
+  }
 
-            list.innerHTML = '';
-            markers.forEach(m => map.removeLayer(m));
-            markers = [];
+  function validatePlaceInput(){
+    if(!state.pendingLatLng) return { ok:false, msg:"Klikk på kartet for å velge plassering før du lagrer." };
+    if(!f_name.value.trim()) return { ok:false, msg:"Navn er påkrevd." };
+    if(!f_desc.value.trim()) return { ok:false, msg:"Beskrivelse er påkrevd." };
+    return { ok:true };
+  }
 
-            // Stats
-            document.getElementById('count-dest').innerText = dataStore.length;
-            document.getElementById('count-cat').innerText = [...new Set(dataStore.map(i => i.cat))].length;
+  function upsertPlace(){
+    const check = validatePlaceInput();
+    if(!check.ok){
+      saveHelp.style.color = "var(--gold)";
+      saveHelp.textContent = check.msg;
+      toast("warn","Mangler info", check.msg, 2200);
+      return;
+    }
 
-            filtered.forEach(item => {
-                // Marker på kart
-                const icon = L.divIcon({
-                    className: 'custom-div-icon',
-                    html: `<div style="background:${getCatColor(item.cat)}; width:12px; height:12px; border:2px solid white; border-radius:50%; box-shadow: 0 0 10px rgba(0,0,0,0.5);"></div>`,
-                    iconSize: [12, 12],
-                    iconAnchor: [6, 6]
-                });
+    const now = Date.now();
+    const incoming = {
+      title: f_name.value.trim(),
+      place_name: f_place.value.trim(),
+      description: f_desc.value.trim(),
+      category: f_cat.value,
+      season: f_season.value,
+      rating: state.ratingVal ? Number(state.ratingVal) : null,
+      image_url: (f_img.value || "").trim(),
+      tips: f_tips.value.trim(),
+      lat: state.pendingLatLng.lat,
+      lon: state.pendingLatLng.lng,
+      is_admin_pick: state.isAdmin ? !!f_adminpick.checked : false
+    };
 
-                const m = L.marker([item.lat, item.lng], { icon }).addTo(map);
-                m.bindPopup(`
-                    <div style="min-width:150px;">
-                        ${item.img ? `<img src="${item.img}" style="width:100%; border-radius:8px; margin-bottom:8px;">` : ''}
-                        <strong style="display:block; font-size:14px;">${item.name}</strong>
-                        <small style="color:#666">${item.cat}</small>
-                    </div>
-                `);
-                markers.push(m);
+    // basic URL sanitize (allow empty or http(s) or blob:)
+    if(incoming.image_url && !/^https?:\/\/|^blob:/.test(incoming.image_url)){
+      saveHelp.style.color = "var(--gold)";
+      saveHelp.textContent = "Bilde-URL må starte med http(s):// (eller være tom).";
+      toast("warn","Ugyldig URL", "Bilde-URL må starte med http(s)://", 2400);
+      return;
+    }
 
-                // Kort i sidebar
-                const card = document.createElement('div');
-                card.className = 'location-card';
-                card.innerHTML = `
-                    <h3>${item.name} <i class="fa-solid fa-trash-can delete-btn" onclick="deleteEntry(${item.id}, event)"></i></h3>
-                    <p>${item.desc || 'Ingen beskrivelse.'}</p>
-                    <span class="tag" style="color:${getCatColor(item.cat)}">${item.cat}</span>
-                `;
-                card.onclick = () => {
-                    map.flyTo([item.lat, item.lng], 14, { duration: 1.5 });
-                    setTimeout(() => m.openPopup(), 1500);
-                };
-                list.appendChild(card);
-            });
-        }
+    pushHistory(state.editingId ? "Rediger" : "Legg til");
 
-        function getCatColor(cat) {
-            const colors = {
-                'Topptur': '#818cf8',
-                'Fiske': '#38bdf8',
-                'Kultur': '#fbbf24',
-                'Camping': '#4ade80',
-                'Utsikt': '#f472b6'
-            };
-            return colors[cat] || '#fff';
-        }
-    </script>
+    if(state.editingId){
+      const idx = state.places.findIndex(x => x.id===state.editingId);
+      if(idx === -1){ toast("bad","Feil","Fant ikke destinasjonen."); return; }
+      const prev = state.places[idx];
+      state.places[idx] = {
+        ...prev,
+        ...incoming,
+        updated_at: now
+      };
+      savePlaces();
+      closeAddModal();
+      render();
+
+      const d = state.places[idx];
+      const m = ensureMarker(d);
+      refreshMarkerPopup(d);
+      state.map.setView([d.lat, d.lon], 15);
+      m.openPopup();
+      toast("ok","Oppdatert", "Destinasjonen ble oppdatert.");
+    } else {
+      const d = {
+        id: uid(),
+        ...incoming,
+        created_at: now,
+        updated_at: now
+      };
+      state.places.unshift(d);
+      savePlaces();
+      closeAddModal();
+      render();
+
+      const m = ensureMarker(d);
+      refreshMarkerPopup(d);
+      state.map.setView([d.lat, d.lon], 15);
+      m.openPopup();
+      toast("ok","Lagret", "Ny destinasjon ble lagt til.");
+    }
+
+    updateUndoRedoButtons();
+  }
+
+  f_file.addEventListener("change", () => {
+    if(state.fileObjectUrl){ URL.revokeObjectURL(state.fileObjectUrl); state.fileObjectUrl=""; }
+    const file = f_file.files && f_file.files[0];
+    if(file){
+      state.fileObjectUrl = URL.createObjectURL(file);
+      f_img.value = state.fileObjectUrl; // local preview
+      toast("ok","Bilde valgt", "Lokalt forhåndsvisningsbilde lagt inn.", 1600);
+    }
+  });
+
+  /* ----------------------------
+     Details modal
+  ---------------------------- */
+  function closeDetails(){
+    detailsOverlay.style.display = "none";
+    requestAnimationFrame(forceMapResize);
+  }
+
+  function openDetails(id){
+    location.hash = `place=${encodeURIComponent(id)}`;
+    openDetailsById(id);
+  }
+
+  function openDetailsById(idRaw){
+    const id = decodeURIComponent(idRaw || "");
+    if(!id) return;
+    const d = state.places.find(x => x.id === id);
+    if(!d) return;
+
+    detailsTitle.textContent = d.title || "Detaljer";
+    detailsSub.textContent = `${categoryLabel(d.category)} • ${seasonLabel(d.season)}${d.place_name ? " • " + d.place_name : ""}`;
+
+    const favOn = state.favs.has(d.id);
+    let distLine = "";
+    if(state.userLatLng){
+      const km = distanceKm(state.userLatLng.lat, state.userLatLng.lng, d.lat, d.lon);
+      distLine = `<div class="help">Avstand fra deg: <strong>${round(km,1)} km</strong></div>`;
+    }
+
+    const gmaps = `https://www.google.com/maps?q=${encodeURIComponent(d.lat + "," + d.lon)}`;
+    const share = location.origin + location.pathname + `#place=${encodeURIComponent(d.id)}`;
+
+    detailsBody.innerHTML = `
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:10px;">
+        ${d.is_admin_pick ? `<span class="badge admin">Admin valg</span>` : ``}
+        ${favOn ? `<span class="badge fav">★ Favoritt</span>` : ``}
+        <span class="badge">${escapeHtml(categoryLabel(d.category))}</span>
+        <span class="badge">${escapeHtml(seasonLabel(d.season))}</span>
+        ${d.rating ? `<span class="badge">⭐ ${d.rating}/5</span>` : ``}
+        ${d.place_name ? `<span class="badge">${escapeHtml(d.place_name)}</span>` : ``}
+      </div>
+
+      <div style="font-size:13px; line-height:1.45; color: rgba(231,238,248,.88);">
+        ${escapeHtml(d.description)}
+      </div>
+
+      ${d.image_url ? `<img class="thumb" src="${escapeHtml(d.image_url)}" alt="" style="margin-top:10px;">` : ``}
+
+      ${d.tips ? `<div class="help" style="margin-top:10px;"><em>${escapeHtml(d.tips)}</em></div>` : ``}
+      ${distLine}
+
+      <div class="section" style="margin-top:12px;">
+        <div class="row" style="flex-wrap:wrap;">
+          <button class="btn ${favOn ? "" : "primary"}" id="detailsFavBtn">${favOn ? "Fjern favoritt" : "Legg til favoritt"}</button>
+          <button class="btn" id="detailsCenterBtn">Sentrer i kart</button>
+          <button class="btn" id="detailsOpenMapsBtn">Åpne i Google Maps</button>
+          <button class="btn" id="detailsShareBtn">Kopier delbar link</button>
+        </div>
+
+        <div class="row" style="margin-top:10px; flex-wrap:wrap;">
+          <button class="btn" id="detailsEditBtn">Rediger</button>
+          <button class="btn bad" id="detailsDeleteBtn">Slett</button>
+        </div>
+
+        <div class="help" id="detailsHelp" style="margin-top:10px;"></div>
+      </div>
+    `;
+
+    // wire events
+    $("#detailsFavBtn").onclick = () => toggleFav(d.id);
+    $("#detailsCenterBtn").onclick = () => {
+      const m = ensureMarker(d);
+      state.map.setView([d.lat, d.lon], 15);
+      m.openPopup();
+      toast("ok","Kart", "Sentrerte destinasjonen i kartet.", 1400);
+    };
+    $("#detailsOpenMapsBtn").onclick = () => window.open(gmaps, "_blank", "noopener,noreferrer");
+    $("#detailsShareBtn").onclick = async () => {
+      try{
+        await navigator.clipboard.writeText(share);
+        $("#detailsHelp").textContent = "Link kopiert til utklippstavlen.";
+        toast("ok","Deling", "Delbar link kopiert.", 1600);
+      } catch {
+        $("#detailsHelp").textContent = "Kunne ikke kopiere automatisk. Link: " + share;
+        toast("warn","Deling", "Kopiering feilet – se link i tekst.", 2400);
+      }
+    };
+
+    $("#detailsEditBtn").onclick = () => {
+      closeDetails();
+      openAddModal(d.id);
+    };
+
+    $("#detailsDeleteBtn").onclick = () => {
+      if(!state.isAdmin){
+        $("#detailsHelp").textContent = "Kun admin kan slette.";
+        toast("warn","Ingen tilgang", "Kun admin kan slette destinasjoner.", 2400);
+        return;
+      }
+      if(!confirm(`Slette "${d.title}"? Dette kan angres med Undo.`)) return;
+      pushHistory("Slett");
+      state.places = state.places.filter(x => x.id !== d.id);
+      state.favs.delete(d.id);
+      savePlaces();
+      saveFavs();
+      closeDetails();
+      render();
+      toast("ok","Slettet", "Destinasjonen ble slettet.");
+      updateUndoRedoButtons();
+    };
+
+    // hide admin-only controls if not admin
+    if(!state.isAdmin){
+      $("#detailsEditBtn").disabled = true;
+      $("#detailsDeleteBtn").disabled = true;
+      $("#detailsHelp").textContent = "Redigering/sletting er låst for brukere i demoen.";
+    }
+
+    detailsOverlay.style.display = "flex";
+    requestAnimationFrame(forceMapResize);
+  }
+
+  // expose to popup button in leaflet popupHtml
+  window.__openDetails = (id) => openDetails(id);
+
+  /* ----------------------------
+     Geolocation
+  ---------------------------- */
+  function setUserMarker(latlng){
+    state.userLatLng = latlng;
+    geoStatus.textContent = `Din posisjon: ${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}`;
+    geoStatus.style.color = "rgba(231,238,248,.75)";
+
+    if(!state.userMarker){
+      state.userMarker = L.circleMarker([latlng.lat, latlng.lng], {
+        radius: 7,
+        weight: 2,
+        opacity: 0.9,
+        fillOpacity: 0.25
+      }).addTo(state.map);
+      state.userMarker.bindPopup("Du er her.");
+    } else {
+      state.userMarker.setLatLng([latlng.lat, latlng.lng]);
+    }
+
+    render();
+  }
+
+  function locateMe(){
+    if(!navigator.geolocation){
+      toast("bad","Geolocation", "Nettleseren støtter ikke geolocation.");
+      return;
+    }
+    geoStatus.textContent = "Henter posisjon…";
+    geoStatus.style.color = "rgba(231,238,248,.75)";
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const latlng = L.latLng(pos.coords.latitude, pos.coords.longitude);
+        setUserMarker(latlng);
+        state.map.setView([latlng.lat, latlng.lng], 12);
+        toast("ok","Finn meg", "Fant posisjonen din.", 1600);
+      },
+      (err) => {
+        geoStatus.textContent = "Kunne ikke hente posisjon (tillatelse/feil).";
+        geoStatus.style.color = "var(--gold)";
+        toast("warn","Finn meg", "Kunne ikke hente posisjon. Sjekk tillatelser.", 2600);
+        console.warn(err);
+      },
+      { enableHighAccuracy:true, timeout:8000 }
+    );
+  }
+
+  /* ----------------------------
+     Import / Export
+  ---------------------------- */
+  function exportJSON(){
+    const payload = {
+      version: 1,
+      exported_at: new Date().toISOString(),
+      places: state.places,
+      favs: Array.from(state.favs)
+    };
+    downloadText("destinasjoner-export.json", JSON.stringify(payload, null, 2));
+    toast("ok","Eksport", "Lastet ned JSON-export.", 1800);
+  }
+
+  async function importJSON(){
+    const txt = prompt("Lim inn JSON her (fra eksport), eller avbryt:");
+    if(!txt) return;
+
+    const parsed = safeParseJSON(txt);
+    if(!parsed.ok){
+      toast("bad","Import feilet", "Ugyldig JSON: " + parsed.error, 3400);
+      return;
+    }
+    const obj = parsed.value;
+
+    const places = obj?.places;
+    const favs = obj?.favs;
+
+    if(!Array.isArray(places)){
+      toast("bad","Import feilet", "Mangler 'places' array i JSON.", 3200);
+      return;
+    }
+
+    // light validation + normalize
+    const cleaned = [];
+    for(const p of places){
+      if(!p || typeof p !== "object") continue;
+      if(typeof p.title !== "string" || typeof p.description !== "string") continue;
+      if(typeof p.lat !== "number" || typeof p.lon !== "number") continue;
+      cleaned.push({
+        id: String(p.id || uid()),
+        title: String(p.title).slice(0,120),
+        place_name: String(p.place_name || "").slice(0,120),
+        description: String(p.description).slice(0,1200),
+        category: String(p.category || "natur"),
+        season: String(p.season || "hele_året"),
+        rating: p.rating ? clamp(Number(p.rating),1,5) : null,
+        image_url: String(p.image_url || ""),
+        tips: String(p.tips || "").slice(0,1200),
+        lat: Number(p.lat),
+        lon: Number(p.lon),
+        is_admin_pick: !!p.is_admin_pick,
+        created_at: Number(p.created_at || Date.now()),
+        updated_at: Number(p.updated_at || Date.now())
+      });
+    }
+
+    pushHistory("Import");
+    state.places = cleaned;
+    state.favs = new Set(Array.isArray(favs) ? favs.map(String) : []);
+    savePlaces();
+    saveFavs();
+    render();
+    toast("ok","Import", `Importerte ${cleaned.length} steder.`, 2200);
+    updateUndoRedoButtons();
+  }
+
+  /* ----------------------------
+     Unlock / Lock
+  ---------------------------- */
+  function unlock(asAdmin){
+    state.isUnlocked = true;
+    state.isAdmin = !!asAdmin;
+
+    paywallEl.style.display = "none";
+    appEl.style.display = "flex";
+
+    initMap();
+    updateModeUI();
+    forceMapResize();
+
+    // if deep link exists, open after render
+    render();
+    const id = (location.hash || "").replace("#place=", "");
+    if(id) openDetailsById(id);
+
+    toast("ok","Velkommen", state.isAdmin ? "Du er i Admin-modus." : "Du er i Bruker-modus.", 2000);
+  }
+
+  function lock(){
+    state.isUnlocked = false;
+    paywallEl.style.display = "flex";
+    appEl.style.display = "none";
+    closeAddModal();
+    closeDetails();
+    toast("warn","Låst", "Appen er låst.", 1600);
+  }
+
+  /* ----------------------------
+     Events
+  ---------------------------- */
+  $("#enterAsAdminBtn").onclick = () => unlock(true);
+  $("#enterAsUserBtn").onclick = () => unlock(false);
+  lockBtn.onclick = lock;
+
+  addBtn.onclick = () => openAddModal(null);
+
+  closeModalBtn.onclick = closeAddModal;
+  cancelAddBtn.onclick = closeAddModal;
+  saveAddBtn.onclick = upsertPlace;
+
+  closeDetailsBtn.onclick = closeDetails;
+
+  qEl.addEventListener("input", render);
+  catEl.addEventListener("change", () => { state.activeChip = catEl.value; render(); });
+  sortEl.addEventListener("change", render);
+  onlyAdminEl.addEventListener("change", render);
+  onlyFavEl.addEventListener("change", render);
+
+  locateBtn.onclick = locateMe;
+
+  exportBtn.onclick = exportJSON;
+  importBtn.onclick = importJSON;
+
+  undoBtn.onclick = undo;
+  redoBtn.onclick = redo;
+
+  // keyboard: ESC close modals
+  window.addEventListener("keydown", (e) => {
+    if(e.key === "Escape"){
+      if(detailsOverlay.style.display === "flex") closeDetails();
+      if(overlay.style.display === "flex") closeAddModal();
+    }
+    if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z"){
+      e.preventDefault();
+      undo();
+    }
+    if((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === "y" || (e.shiftKey && e.key.toLowerCase()==="z"))){
+      e.preventDefault();
+      redo();
+    }
+  });
+
+  // initial
+  loadState();
+  updateUndoRedoButtons();
+  renderChips();
+
+  toast("ok","Klar", "Åpne som Admin/Bruker for å starte.", 2400);
+
+})();
+</script>
 </body>
 </html>
