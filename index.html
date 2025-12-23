@@ -27,15 +27,13 @@
 
     *{ box-sizing:border-box; }
 
-    /* ✅ Viktig: full høyde */
-    html, body { height:100%; }
+    html, body { height:100%; margin:0; padding:0; }
 
     body{
-      margin:0;
       font-family: Arial, sans-serif;
       background:var(--bg);
       color:var(--text);
-      overflow:hidden; /* hindrer rare scroll/height bugs */
+      overflow:hidden;
     }
 
     .app{
@@ -50,15 +48,15 @@
       border-right:1px solid var(--line);
       padding:14px;
       background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,0));
-      overflow:auto;
+      overflow-y:auto;
+      z-index: 10;
     }
 
-    /* ✅ Viktig: map må ha eksplisitt høyde/bredde */
     #map{
       flex:1;
-      height:100vh;
-      width:100%;
+      height: 100%;
       background:#0b0f14;
+      z-index: 1;
     }
 
     .topbar{
@@ -88,7 +86,6 @@
     }
     .btn:hover{ border-color: rgba(255,255,255,.22); }
     .btn.primary{ background: rgba(34,197,94,.15); border-color: rgba(34,197,94,.35); }
-    .btn.primary:hover{ border-color: rgba(34,197,94,.6); }
     .btn.warn{ background: rgba(245,158,11,.12); border-color: rgba(245,158,11,.35); }
     .btn.ghost{ background: transparent; }
 
@@ -98,7 +95,6 @@
       border:1px solid var(--line);
       background: rgba(255,255,255,.03);
       font-size:12px; color: var(--muted);
-      white-space:nowrap;
     }
     .dot{ width:8px; height:8px; border-radius:999px; background: var(--bad); }
     .dot.on{ background: var(--ok); }
@@ -117,8 +113,6 @@
       outline:none;
       font-size:13px;
     }
-    input::placeholder, textarea::placeholder{ color: var(--muted2); }
-    textarea{ min-height: 84px; resize: vertical; }
 
     .chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
     .chip{
@@ -129,22 +123,8 @@
       border-radius:999px;
       font-size:12px;
       cursor:pointer;
-      user-select:none;
     }
     .chip.active{ border-color: rgba(34,197,94,.65); background: rgba(34,197,94,.12); }
-
-    .toggles{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
-    .toggle{
-      display:flex; align-items:center; gap:8px;
-      padding:8px 10px; border-radius:12px;
-      border:1px solid var(--line);
-      background: rgba(255,255,255,.02);
-      font-size:12px; color: var(--muted);
-      cursor:pointer;
-      user-select:none;
-    }
-    .toggle input{ width:auto; }
-    .toggle strong{ color:var(--text); font-weight:700; }
 
     .list{ margin-top:12px; display:flex; flex-direction:column; gap:10px; }
     .card{
@@ -154,8 +134,6 @@
       cursor:pointer;
     }
     .card:hover{ border-color: rgba(255,255,255,.22); }
-    .card .title{ font-weight:800; font-size:14px; }
-    .card .meta{ margin-top:6px; display:flex; flex-wrap:wrap; gap:6px; }
     .badge{
       display:inline-block; font-size:11px; padding:2px 8px; border-radius:999px;
       border:1px solid var(--line);
@@ -163,99 +141,37 @@
       color: var(--muted);
     }
     .badge.admin{ border-color: rgba(245,158,11,.55); background: rgba(245,158,11,.12); color: #ffd8a8; }
-    .card .desc{ margin-top:6px; font-size:12px; color: var(--muted); line-height:1.35; }
-    .thumb{ width:100%; border-radius: 12px; margin-top:8px; display:block; border:1px solid var(--line); }
+    .thumb{ width:100%; border-radius: 12px; margin-top:8px; border:1px solid var(--line); }
 
-    /* ✅ Modal overlay: lar kart-klikk gå gjennom */
     .overlay{
       position:fixed; inset:0;
-      background: rgba(0,0,0,.55);
+      background: rgba(0,0,0,.7);
       display:none;
       align-items:center; justify-content:center;
       padding:18px;
-      z-index:2000;
-      pointer-events:none;
+      z-index:3000;
     }
-    .modal{ pointer-events:auto; }
-
-    .modal{
-      width:min(820px, 98vw);
-      max-height: 92vh;
-      overflow:auto;
-      border:1px solid rgba(255,255,255,.14);
-      background: #0c1220;
-      border-radius: 18px;
-      box-shadow: var(--shadow);
-    }
-    .modalHeader{
-      display:flex; align-items:center; gap:10px;
-      padding:12px 14px;
-      border-bottom: 1px solid var(--line);
-      position:sticky; top:0;
-      background: rgba(12,18,32,.96);
-      backdrop-filter: blur(8px);
-    }
-    .modalHeader h2{ margin:0; font-size:14px; font-weight:900; }
-    .modalHeader .small{ font-size:12px; color: var(--muted); }
-    .modalBody{ padding:14px; }
-    .grid{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
-    .grid .full{ grid-column: 1 / -1; }
-    .label{ font-size:12px; color: var(--muted); margin: 2px 0 6px; }
-    .help{ font-size:12px; color: var(--muted2); margin-top:6px; }
-
-    .stars{
-      display:flex; gap:6px; align-items:center;
-      padding:8px 10px; border-radius:12px;
-      border:1px solid var(--line);
-      background:#0c1320;
-      height: 40px;
-    }
-    .star{ font-size:18px; cursor:pointer; user-select:none; opacity:.45; }
-    .star.on{ opacity:1; }
-    .starVal{ font-size:12px; color: var(--muted); margin-left:8px; }
+    .modal{ background: #0c1220; border-radius: 18px; width:min(820px, 98vw); max-height: 92vh; overflow:auto; border:1px solid var(--line2); }
 
     .paywall{
-      position:fixed; inset:0; z-index:3000;
-      background: radial-gradient(circle at 25% 10%, rgba(34,197,94,.18), rgba(0,0,0,0) 45%),
-                  radial-gradient(circle at 70% 20%, rgba(245,158,11,.15), rgba(0,0,0,0) 40%),
-                  var(--bg);
+      position:fixed; inset:0; z-index:4000;
+      background: var(--bg);
       display:flex; align-items:center; justify-content:center;
-      padding:18px;
     }
     .payCard{
       width:min(860px, 98vw);
       border:1px solid rgba(255,255,255,.12);
       border-radius: 22px;
       background: rgba(255,255,255,.03);
-      box-shadow: var(--shadow);
-      overflow:hidden;
       display:grid;
       grid-template-columns: 1.1fr .9fr;
     }
-    .payLeft{ padding:18px; }
-    .payRight{ padding:18px; border-left:1px solid rgba(255,255,255,.10); background: rgba(17,24,38,.35); }
-    .payTitle{ font-size:22px; font-weight:900; margin:0; }
-    .paySub{ margin-top:8px; color:var(--muted); line-height:1.4; }
-    .payBullets{ margin-top:12px; color:var(--muted); }
-    .payBullets li{ margin:6px 0; }
-    .payBox{
-      border:1px solid rgba(255,255,255,.12);
-      border-radius: 18px;
-      padding:14px;
-      background: rgba(12,18,32,.55);
-    }
-    .payBox h3{ margin:0 0 8px; font-size:14px; }
-    .price{ font-size:26px; font-weight:900; margin: 6px 0 6px; }
-    .fine{ font-size:12px; color:var(--muted2); line-height:1.4; }
-    .sep{ height:1px; background: rgba(255,255,255,.10); margin: 12px 0; }
-    .note{ font-size:12px; color:var(--muted2); margin-top:10px; }
 
     @media (max-width: 900px){
       .app{ flex-direction:column; }
       .side{ width:100%; max-width:none; height:46vh; border-right:none; border-bottom:1px solid var(--line); }
       #map{ height:54vh; }
       .payCard{ grid-template-columns: 1fr; }
-      .payRight{ border-left:none; border-top:1px solid rgba(255,255,255,.10); }
     }
   </style>
 </head>
@@ -264,38 +180,12 @@
 
 <div id="paywall" class="paywall">
   <div class="payCard">
-    <div class="payLeft">
-      <div class="brand" style="margin-bottom:10px">
-        <div class="logo"></div>
-        <div>
-          <div style="font-weight:900">Norge Reise</div>
-          <div style="font-size:12px; color:var(--muted2)">Oppdag og del de beste reisemålene</div>
-        </div>
-      </div>
-
-      <h2 class="payTitle">Lås opp kartet (demo)</h2>
-      <div class="paySub">Velg modus for å gå inn.</div>
-      <ul class="payBullets">
-        <li>Legg inn steder med bilde, tips og ⭐ vurdering</li>
-        <li>Filter på kategorier</li>
-        <li>Alle ser de samme anbefalingene (i demo forsvinner nye steder ved refresh)</li>
-      </ul>
-    </div>
-
-    <div class="payRight">
-      <div class="payBox">
-        <h3>Abonnement</h3>
-        <div class="price">79 kr / mnd</div>
-        <div class="fine">(Demo) Klikk for å gå inn.</div>
-
-        <div class="sep"></div>
-
-        <div class="row">
-          <button class="btn warn" id="enterAsAdminBtn">Fortsett som Admin</button>
-          <button class="btn primary" id="enterAsUserBtn">Fortsett som Bruker</button>
-        </div>
-
-        <div class="note">Admin kan merke “Admin valg”.</div>
+    <div style="padding:20px;">
+      <h2 style="margin:0">Oppdag Norge</h2>
+      <p style="color:var(--muted)">Velg en modus for å starte kartet.</p>
+      <div class="row" style="margin-top:20px">
+        <button class="btn warn" id="enterAsAdminBtn">Admin Modus</button>
+        <button class="btn primary" id="enterAsUserBtn">Bruker Modus</button>
       </div>
     </div>
   </div>
@@ -306,47 +196,17 @@
     <div class="topbar">
       <div class="brand">
         <div class="logo"></div>
-        <div style="min-width:0">
-          <h1>Oppdag Norge</h1>
-          <div class="sub">Utforsk og del de beste reisemålene</div>
-        </div>
+        <h1>Oppdag Norge</h1>
       </div>
-
       <div class="spacer"></div>
-
-      <span class="pill">
-        <span id="adminDot" class="dot"></span>
-        <span><strong id="modeLabel">Bruker</strong></span>
-      </span>
-
+      <span class="pill"><span id="adminDot" class="dot"></span> <span id="modeLabel">Bruker</span></span>
       <button class="btn primary" id="addBtn">+ Legg til</button>
-      <button class="btn ghost" id="lockBtn">Lås</button>
     </div>
 
     <div class="controls">
-      <div class="row">
-        <input id="q" placeholder="Søk destinasjoner (navn / sted / tips)" />
-        <select id="cat">
-          <option value="">Alle</option>
-          <option value="natur">Natur</option>
-          <option value="kultur">Kultur</option>
-          <option value="aktiviteter">Aktiviteter</option>
-          <option value="mat">Mat</option>
-          <option value="overnatting">Overnatting</option>
-          <option value="shopping">Shopping</option>
-          <option value="utsikt">Utsikt</option>
-        </select>
-      </div>
-
-      <div class="toggles">
-        <label class="toggle">
-          <input type="checkbox" id="onlyAdmin" />
-          <strong>Kun Admin valg</strong>
-        </label>
-      </div>
-
+      <input id="q" placeholder="Søk..." />
       <div class="chips" id="chips"></div>
-      <div class="help" id="tileStatus" style="margin-top:10px;"></div>
+      <div id="tileStatus" style="font-size:11px; margin-top:10px; opacity:0.5;"></div>
     </div>
 
     <div class="list" id="list"></div>
@@ -356,481 +216,138 @@
 </div>
 
 <div class="overlay" id="overlay">
-  <div class="modal">
-    <div class="modalHeader">
-      <div>
-        <h2>Legg til ny destinasjon</h2>
-        <div class="small" id="modalCoord">Klikk på kartet for å velge plassering</div>
-      </div>
-      <div class="spacer"></div>
-      <button class="btn ghost" id="closeModal">✕</button>
-    </div>
-
-    <div class="modalBody">
-      <div class="grid">
-        <div>
-          <div class="label">Navn *</div>
-          <input id="f_name" placeholder="F.eks. Preikestolen" />
-        </div>
-
-        <div>
-          <div class="label">Stedsnavn (valgfritt)</div>
-          <input id="f_place" placeholder="F.eks. Stavanger, Rogaland" />
-        </div>
-
-        <div class="full">
-          <div class="label">Beskrivelse *</div>
-          <textarea id="f_desc" placeholder="Beskriv destinasjonen..."></textarea>
-        </div>
-
-        <div>
-          <div class="label">Kategori *</div>
-          <select id="f_cat">
-            <option value="natur">Natur</option>
-            <option value="kultur">Kultur</option>
-            <option value="aktiviteter">Aktiviteter</option>
-            <option value="mat">Mat</option>
-            <option value="overnatting">Overnatting</option>
-            <option value="shopping">Shopping</option>
-            <option value="utsikt">Utsikt</option>
-          </select>
-        </div>
-
-        <div>
-          <div class="label">Beste sesong *</div>
-          <select id="f_season">
-            <option value="hele_året">Hele året</option>
-            <option value="vår">Vår</option>
-            <option value="sommer">Sommer</option>
-            <option value="høst">Høst</option>
-            <option value="vinter">Vinter</option>
-          </select>
-        </div>
-
-        <div>
-          <div class="label">Vurdering</div>
-          <div class="stars" id="stars">
-            <span class="star" data-v="1">★</span>
-            <span class="star" data-v="2">★</span>
-            <span class="star" data-v="3">★</span>
-            <span class="star" data-v="4">★</span>
-            <span class="star" data-v="5">★</span>
-            <span class="starVal" id="starVal">Ikke valgt</span>
-          </div>
-        </div>
-
-        <div>
-          <div class="label">Bilde (valgfritt)</div>
-          <input type="file" id="f_file" accept="image/*" />
-          <div class="help">Opplasting er lokal preview i demoen.</div>
-        </div>
-
-        <div class="full">
-          <div class="label">Bilde-URL (valgfritt)</div>
-          <input id="f_img" placeholder="https://..." />
-        </div>
-
-        <div class="full">
-          <div class="label">Tips (valgfritt)</div>
-          <textarea id="f_tips" placeholder="Parkering, beste tidspunkt, osv."></textarea>
-        </div>
-
-        <div class="full" id="adminPickWrap" style="display:none;">
-          <label class="toggle" style="width:fit-content;">
-            <input type="checkbox" id="f_adminpick" />
-            <strong>Merk som “Admin valg”</strong>
-          </label>
-        </div>
-
-        <div class="full">
-          <div class="row">
-            <button class="btn" id="cancelAdd">Avbryt</button>
-            <button class="btn primary" id="saveAdd">Lagre</button>
-          </div>
-          <div class="help" id="saveHelp"></div>
-        </div>
-
-      </div>
+  <div class="modal" style="padding:20px;">
+    <h2 id="modalCoord">Klikk på kartet for posisjon</h2>
+    <input id="f_name" placeholder="Navn på sted" style="margin-bottom:10px" />
+    <textarea id="f_desc" placeholder="Beskrivelse" style="margin-bottom:10px"></textarea>
+    <div class="row">
+        <button class="btn" id="cancelAdd">Avbryt</button>
+        <button class="btn primary" id="saveAdd">Lagre sted</button>
     </div>
   </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  let isUnlocked = false;
+  let map;
   let isAdmin = false;
+  let isUnlocked = false;
+  let markers = new Map();
+  let pendingLatLng = null;
+  let tempMarker = null;
 
   const steder = [
-    {
-      id: crypto.randomUUID(),
-      title: "Bryggen",
-      place_name: "Bergen",
-      description: "Historisk havnefront med fargerike trehus og smale smug.",
-      category: "kultur",
-      season: "hele_året",
-      rating: 5,
-      image_url: "https://commons.wikimedia.org/wiki/Special:FilePath/Bryggen%20Bergen.jpg",
-      tips: "Best tidlig morgen eller kveld.",
-      lat: 60.3971,
-      lon: 5.3249,
-      is_admin_pick: true
-    },
-    {
-      id: crypto.randomUUID(),
-      title: "Ravnåsen utsiktspunkt",
-      place_name: "Sandefjord",
-      description: "Skogkledd høyde med flott utsikt over Sandefjord og fjorden.",
-      category: "utsikt",
-      season: "hele_året",
-      rating: 4,
-      image_url: "",
-      tips: "Fin kveldstur med solnedgang.",
-      lat: 59.1346,
-      lon: 10.2169,
-      is_admin_pick: false
-    }
+    { id: '1', title: "Bryggen", description: "Historisk i Bergen", lat: 60.3971, lon: 5.3249, category: "kultur", is_admin_pick: true },
+    { id: '2', title: "Ravnåsen", description: "Utsikt i Sandefjord", lat: 59.1346, lon: 10.2169, category: "utsikt", is_admin_pick: false }
   ];
 
-  const CATEGORIES = [
-    { key:"natur", label:"Natur" },
-    { key:"kultur", label:"Kultur" },
-    { key:"aktiviteter", label:"Aktiviteter" },
-    { key:"mat", label:"Mat" },
-    { key:"overnatting", label:"Overnatting" },
-    { key:"shopping", label:"Shopping" },
-    { key:"utsikt", label:"Utsikt" }
-  ];
+  // 1. Initialiser kartet i en funksjon
+  function initMap() {
+    if (map) return; // Ikke lag kartet to ganger
 
-  function seasonLabel(v){
-    return ({
-      "hele_året":"Hele året",
-      "vår":"Vår",
-      "sommer":"Sommer",
-      "høst":"Høst",
-      "vinter":"Vinter"
-    }[v] || v);
-  }
-  function starsText(n){
-    if(!n) return "";
-    const r = Math.round(n);
-    return "★★★★★".slice(0,r) + "☆☆☆☆☆".slice(0,5-r);
-  }
-  function escapeHtml(str){
-    return String(str ?? "")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
+    map = L.map('map').setView([59.0, 9.0], 6);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
 
-  // Paywall
-  const paywallEl = document.getElementById("paywall");
-  const appEl = document.getElementById("app");
-  const adminDot = document.getElementById("adminDot");
-  const modeLabel = document.getElementById("modeLabel");
-  const adminPickWrap = document.getElementById("adminPickWrap");
-
-  document.getElementById("enterAsAdminBtn").onclick = () => unlock(true);
-  document.getElementById("enterAsUserBtn").onclick = () => unlock(false);
-  document.getElementById("lockBtn").onclick = () => {
-    isUnlocked = false;
-    paywallEl.style.display = "flex";
-    appEl.style.display = "none";
-  };
-
-  // Map
-  const map = L.map("map", { zoomControl:true }).setView([59.20, 10.25], 5);
-
-  const tileStatus = document.getElementById("tileStatus");
-  function addTiles(url, label){
-    const layer = L.tileLayer(url, { attribution:"© OpenStreetMap" });
-    layer.addTo(map);
-    tileStatus.textContent = `Kartkilde: ${label}`;
-    tileStatus.style.color = "rgba(231,238,248,.75)";
-
-    let err = 0;
-    layer.on("tileerror", () => {
-      err++;
-      if(err >= 3){
-        map.removeLayer(layer);
-        tileStatus.textContent = "Kartfliser feilet – bytter kartkilde…";
-        tileStatus.style.color = "#ffd18a";
-        addTiles("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", "OSM Standard");
+    // Lytt på klikk for å legge til nye steder
+    map.on('click', function(e) {
+      if(document.getElementById('overlay').style.display === 'flex') {
+        pendingLatLng = e.latlng;
+        if(tempMarker) map.removeLayer(tempMarker);
+        tempMarker = L.marker(e.latlng).addTo(map);
+        document.getElementById('modalCoord').textContent = `Valgt: ${e.latlng.lat.toFixed(4)}, ${e.latlng.lng.toFixed(4)}`;
       }
     });
   }
-  addTiles("https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png", "OSM HOT");
 
-  // ✅ Viktig: tving Leaflet til å beregne størrelse riktig
-  function forceMapResize(){
-    setTimeout(() => {
-      map.invalidateSize(true);
-    }, 60);
-  }
-
-  function unlock(admin){
-    isUnlocked = true;
+  function unlock(admin) {
     isAdmin = admin;
-    paywallEl.style.display = "none";
-    appEl.style.display = "flex";
-    adminDot.classList.toggle("on", isAdmin);
-    modeLabel.textContent = isAdmin ? "Admin" : "Bruker";
-    adminPickWrap.style.display = isAdmin ? "block" : "none";
+    isUnlocked = true;
+    document.getElementById("paywall").style.display = "none";
+    document.getElementById("app").style.display = "flex";
+    document.getElementById("modeLabel").textContent = admin ? "Admin" : "Bruker";
+    document.getElementById("adminDot").classList.toggle("on", admin);
 
-    forceMapResize();
-    render();
+    // START KARTET NÅ
+    initMap();
+
+    // VIKTIG: Gi nettleseren et millisekund på å tegne diven før vi fikser kartstørrelsen
+    setTimeout(() => {
+      map.invalidateSize();
+      render();
+    }, 200);
   }
 
-  window.addEventListener("resize", forceMapResize);
-
-  // Markers
-  const markers = new Map();
-  function popupHtml(d){
-    const img = d.image_url ? `<img class="thumb" src="${d.image_url}" alt="">` : "";
-    const rating = d.rating ? ` <span style="color:#ffd18a;font-weight:900">${starsText(d.rating)}</span> <span style="opacity:.7">(${d.rating}/5)</span>` : "";
-    const admin = d.is_admin_pick ? `<span class="badge admin">Admin valg</span>` : "";
-    return `
-      <div style="max-width:320px">
-        <div style="font-weight:900;font-size:14px">${escapeHtml(d.title)}${rating}</div>
-        <div style="margin-top:6px;opacity:.88;line-height:1.35">${escapeHtml(d.description)}</div>
-        <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px">
-          ${admin}
-          <span class="badge">${escapeHtml(d.category)}</span>
-          <span class="badge">${escapeHtml(seasonLabel(d.season))}</span>
-          ${d.place_name ? `<span class="badge">${escapeHtml(d.place_name)}</span>` : ``}
-        </div>
-        ${img}
-        ${d.tips ? `<div style="margin-top:8px;opacity:.9"><em>${escapeHtml(d.tips)}</em></div>` : ``}
-      </div>
-    `;
-  }
-  function ensureMarker(d){
-    if(markers.has(d.id)) return markers.get(d.id);
-    const m = L.marker([d.lat, d.lon]).addTo(map).bindPopup(popupHtml(d));
-    markers.set(d.id, m);
-    return m;
-  }
-  function clearMarkers(){
-    for(const m of markers.values()) map.removeLayer(m);
-    markers.clear();
-  }
-
-  // UI filters
-  const chipsEl = document.getElementById("chips");
-  const listEl = document.getElementById("list");
-  const qEl = document.getElementById("q");
-  const catEl = document.getElementById("cat");
-  const onlyAdminEl = document.getElementById("onlyAdmin");
-
-  let activeChip = "";
-  function renderChips(){
-    chipsEl.innerHTML = "";
-    const all = document.createElement("div");
-    all.className = "chip " + (activeChip==="" ? "active" : "");
-    all.textContent = "Alle";
-    all.onclick = () => { activeChip=""; catEl.value=""; render(); };
-    chipsEl.appendChild(all);
-
-    for(const c of CATEGORIES){
-      const el = document.createElement("div");
-      el.className = "chip " + (activeChip===c.key ? "active" : "");
-      el.textContent = c.label;
-      el.onclick = () => { activeChip=c.key; catEl.value=c.key; render(); };
-      chipsEl.appendChild(el);
-    }
-  }
-  renderChips();
-
-  qEl.addEventListener("input", render);
-  catEl.addEventListener("change", () => { activeChip = catEl.value; render(); });
-  onlyAdminEl.addEventListener("change", render);
-
-  function filtered(){
-    const q = qEl.value.trim().toLowerCase();
-    const cat = catEl.value;
-    const onlyAdmin = onlyAdminEl.checked;
-    return steder.filter(d => {
-      const text = `${d.title} ${d.description} ${d.tips||""} ${d.place_name||""}`.toLowerCase();
-      return (!q || text.includes(q)) &&
-             (!cat || d.category===cat) &&
-             (!onlyAdmin || d.is_admin_pick);
-    });
-  }
-
-  function render(){
+  function render() {
     if(!isUnlocked) return;
 
-    renderChips();
-    const items = filtered();
+    // Fjern gamle markører
+    markers.forEach(m => map.removeLayer(m));
+    markers.clear();
 
-    clearMarkers();
-    items.forEach(d => ensureMarker(d));
-
-    // Ikke fitBounds aggressivt - behold zoom du setter selv
-    // Men hvis ingen view ennå, zoom til Norge-ish:
-    if(!items.length){
-      map.setView([64.5, 11.0], 4);
-    }
-
+    const listEl = document.getElementById("list");
     listEl.innerHTML = "";
-    items.forEach(d => {
+
+    steder.forEach(d => {
+      // Legg til på kart
+      const m = L.marker([d.lat, d.lon]).addTo(map).bindPopup(`<b>${d.title}</b><br>${d.description}`);
+      markers.set(d.id, m);
+
+      // Legg til i liste
       const card = document.createElement("div");
       card.className = "card";
-      card.innerHTML = `
-        <div class="title">${escapeHtml(d.title)}</div>
-        <div class="meta">
-          ${d.is_admin_pick ? `<span class="badge admin">Admin valg</span>` : ``}
-          <span class="badge">${escapeHtml(d.category)}</span>
-          <span class="badge">${escapeHtml(seasonLabel(d.season))}</span>
-          ${d.place_name ? `<span class="badge">${escapeHtml(d.place_name)}</span>` : ``}
-          ${d.rating ? `<span class="badge">⭐ ${d.rating}/5</span>` : ``}
-        </div>
-        <div class="desc">${escapeHtml(d.description)}</div>
-        ${d.image_url ? `<img class="thumb" src="${d.image_url}" alt="">` : ``}
-      `;
+      card.innerHTML = `<div class="title"><b>${d.title}</b></div><div class="badge">${d.category}</div>`;
       card.onclick = () => {
-        const m = ensureMarker(d);
-        map.setView([d.lat, d.lon], 15);
+        map.setView([d.lat, d.lon], 13);
         m.openPopup();
       };
       listEl.appendChild(card);
     });
-
-    if(!items.length){
-      listEl.innerHTML = `<div style="opacity:.75;padding:8px;">Ingen treff.</div>`;
-    }
-
-    forceMapResize();
   }
 
-  // Add modal
-  const overlay = document.getElementById("overlay");
-  const addBtn = document.getElementById("addBtn");
-  const closeModalBtn = document.getElementById("closeModal");
-  const cancelAddBtn = document.getElementById("cancelAdd");
-  const saveAddBtn = document.getElementById("saveAdd");
-  const modalCoord = document.getElementById("modalCoord");
-  const saveHelp = document.getElementById("saveHelp");
+  // Event Listeners
+  document.getElementById("enterAsAdminBtn").onclick = () => unlock(true);
+  document.getElementById("enterAsUserBtn").onclick = () => unlock(false);
 
-  const f_name = document.getElementById("f_name");
-  const f_place = document.getElementById("f_place");
-  const f_desc = document.getElementById("f_desc");
-  const f_cat = document.getElementById("f_cat");
-  const f_season = document.getElementById("f_season");
-  const f_img = document.getElementById("f_img");
-  const f_tips = document.getElementById("f_tips");
-  const f_file = document.getElementById("f_file");
-  const f_adminpick = document.getElementById("f_adminpick");
-
-  let pendingLatLng = null;
-  let tempPin = null;
-  let ratingVal = null;
-  let fileObjectUrl = "";
-
-  const stars = Array.from(document.querySelectorAll(".star"));
-  const starValEl = document.getElementById("starVal");
-  function setRating(v){
-    ratingVal = v;
-    stars.forEach(s => s.classList.toggle("on", Number(s.dataset.v) <= v));
-    starValEl.textContent = v ? `${v}/5` : "Ikke valgt";
-  }
-  stars.forEach(s => s.addEventListener("click", () => setRating(Number(s.dataset.v))));
-  setRating(null);
-
-  function openModal(){
-    overlay.style.display = "flex";
-    saveHelp.textContent = "";
-    forceMapResize();
-  }
-  function closeModal(){
-    overlay.style.display = "none";
+  document.getElementById("addBtn").onclick = () => {
+    document.getElementById("overlay").style.display = "flex";
     pendingLatLng = null;
-    if(tempPin){ map.removeLayer(tempPin); tempPin = null; }
-    if(fileObjectUrl){ URL.revokeObjectURL(fileObjectUrl); fileObjectUrl=""; }
-    forceMapResize();
-  }
-
-  addBtn.onclick = () => {
-    f_name.value = "";
-    f_place.value = "";
-    f_desc.value = "";
-    f_cat.value = "natur";
-    f_season.value = "hele_året";
-    f_img.value = "";
-    f_tips.value = "";
-    f_file.value = "";
-    if(isAdmin) f_adminpick.checked = false;
-    setRating(null);
-
-    pendingLatLng = null;
-    modalCoord.textContent = "Klikk på kartet for å velge plassering";
-    openModal();
+    if(tempMarker) map.removeLayer(tempMarker);
+    // Vi må kjøre invalidateSize igjen inne i modaler hvis de har kart
+    map.invalidateSize();
   };
 
-  closeModalBtn.onclick = closeModal;
-  cancelAddBtn.onclick = closeModal;
+  document.getElementById("cancelAdd").onclick = () => {
+    document.getElementById("overlay").style.display = "none";
+    if(tempMarker) map.removeLayer(tempMarker);
+  };
 
-  map.on("click", (e) => {
-    if(overlay.style.display !== "flex") return;
-    pendingLatLng = e.latlng;
-    modalCoord.textContent = `Valgt posisjon: ${pendingLatLng.lat.toFixed(5)}, ${pendingLatLng.lng.toFixed(5)}`;
-    if(tempPin) map.removeLayer(tempPin);
-    tempPin = L.marker([pendingLatLng.lat, pendingLatLng.lng]).addTo(map);
-  });
+  document.getElementById("saveAdd").onclick = () => {
+    if(!pendingLatLng) return alert("Klikk på kartet først!");
+    const name = document.getElementById("f_name").value;
+    if(!name) return alert("Mangler navn");
 
-  f_file.addEventListener("change", () => {
-    if(fileObjectUrl){ URL.revokeObjectURL(fileObjectUrl); fileObjectUrl=""; }
-    const file = f_file.files && f_file.files[0];
-    if(file){
-      fileObjectUrl = URL.createObjectURL(file);
-      f_img.value = fileObjectUrl; // demo preview
-    }
-  });
-
-  saveAddBtn.onclick = () => {
-    saveHelp.style.color = "";
-    saveHelp.textContent = "";
-
-    if(!pendingLatLng){
-      saveHelp.style.color = "#ffd18a";
-      saveHelp.textContent = "Klikk på kartet for å velge plassering før du lagrer.";
-      return;
-    }
-    if(!f_name.value.trim()){
-      saveHelp.style.color = "#ffd18a";
-      saveHelp.textContent = "Navn er påkrevd.";
-      return;
-    }
-    if(!f_desc.value.trim()){
-      saveHelp.style.color = "#ffd18a";
-      saveHelp.textContent = "Beskrivelse er påkrevd.";
-      return;
-    }
-
-    const d = {
-      id: crypto.randomUUID(),
-      title: f_name.value.trim(),
-      place_name: f_place.value.trim(),
-      description: f_desc.value.trim(),
-      category: f_cat.value,
-      season: f_season.value,
-      rating: ratingVal ? Number(ratingVal) : null,
-      image_url: (f_img.value || "").trim(),
-      tips: f_tips.value.trim(),
+    steder.push({
+      id: Date.now().toString(),
+      title: name,
+      description: document.getElementById("f_desc").value,
       lat: pendingLatLng.lat,
       lon: pendingLatLng.lng,
-      is_admin_pick: isAdmin ? !!f_adminpick.checked : false
-    };
+      category: "ny",
+      is_admin_pick: false
+    });
 
-    steder.unshift(d);
-    closeModal();
+    document.getElementById("overlay").style.display = "none";
     render();
-
-    const m = ensureMarker(d);
-    map.setView([d.lat, d.lon], 15);
-    m.openPopup();
   };
+
+  // Fiks kart hvis vinduet endrer størrelse
+  window.addEventListener('resize', () => {
+    if(map) map.invalidateSize();
+  });
+
 </script>
 </body>
 </html>
