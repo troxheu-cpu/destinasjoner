@@ -3,200 +3,365 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Norge / Explorer</title>
+    <title>EXPLORER / Norge Pro</title>
+    
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    
     <style>
         :root {
-            --brand: #3b82f6;
-            --bg: #020617;
-            --surface: #0f172a;
+            --brand: #6366f1;
+            --brand-dark: #4f46e5;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-light: #334155;
             --text: #f8fafc;
-            --muted: #94a3b8;
-            --glass: rgba(15, 23, 42, 0.8);
-            --border: rgba(255, 255, 255, 0.1);
+            --text-muted: #94a3b8;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --border: rgba(255, 255, 255, 0.08);
+            --glass: rgba(15, 23, 42, 0.9);
+            --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Inter', -apple-system, sans-serif; background: var(--bg); color: var(--text); overflow: hidden; }
+        * { margin: 0; padding: 0; box-sizing: border-box; outline: none; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); overflow: hidden; line-height: 1.5; }
 
-        /* --- HOME SECTION --- */
-        #home-page {
-            position: fixed; inset: 0; z-index: 5000;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background: radial-gradient(circle at top right, #1e3a8a, var(--bg));
-            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        /* --- LANDING / HERO SECTION --- */
+        #hero-section {
+            position: fixed; inset: 0; z-index: 10000;
+            background: radial-gradient(circle at 0% 0%, #312e81 0%, var(--bg) 50%);
+            display: flex; align-items: center; justify-content: center;
+            transition: transform 0.8s cubic-bezier(0.87, 0, 0.13, 1);
         }
 
-        .hero { text-align: center; max-width: 800px; padding: 20px; }
-        .hero h1 { font-size: 5rem; font-weight: 800; letter-spacing: -0.05em; margin-bottom: 20px; }
-        .hero p { color: var(--muted); font-size: 1.2rem; margin-bottom: 40px; }
+        .hero-content { text-align: center; max-width: 900px; padding: 40px; }
+        .hero-content h1 { font-size: clamp(3rem, 8vw, 6rem); font-weight: 900; letter-spacing: -0.04em; line-height: 0.9; margin-bottom: 24px; }
+        .hero-content p { font-size: 1.25rem; color: var(--text-muted); margin-bottom: 40px; max-width: 600px; margin-inline: auto; }
         
-        .cta-group { display: flex; gap: 15px; justify-content: center; }
         .btn { 
-            padding: 14px 28px; border-radius: 99px; border: none; font-weight: 600; 
-            cursor: pointer; transition: all 0.2s; font-size: 1rem; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 10px;
+            padding: 16px 32px; border-radius: 12px; border: none; font-weight: 700; 
+            cursor: pointer; transition: all 0.2s; font-size: 1.1rem; text-decoration: none;
         }
-        .btn-primary { background: var(--brand); color: white; }
-        .btn-primary:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(59, 130, 246, 0.5); }
-        .btn-glass { background: var(--glass); color: white; border: 1px solid var(--border); }
+        .btn-main { background: var(--brand); color: white; box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.4); }
+        .btn-main:hover { background: var(--brand-dark); transform: translateY(-2px); }
 
-        /* --- MAP INTERFACE --- */
-        #app-interface { display: grid; grid-template-columns: 400px 1fr; height: 100vh; visibility: hidden; }
+        /* --- APP LAYOUT --- */
+        .app-container { display: grid; grid-template-columns: 400px 1fr; height: 100vh; opacity: 0; transition: opacity 1s ease; }
+        .app-active .app-container { opacity: 1; }
+        .app-active #hero-section { transform: translateY(-100%); }
 
-        .sidebar {
-            background: var(--surface); border-right: 1px solid var(--border);
-            display: flex; flex-direction: column; z-index: 100;
+        /* SIDEBAR */
+        .sidebar { background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; z-index: 100; box-shadow: 10px 0 30px rgba(0,0,0,0.2); }
+        
+        .sidebar-nav { padding: 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+        .logo { font-weight: 800; font-size: 1.25rem; letter-spacing: -0.02em; color: var(--brand); }
+
+        .sidebar-scroll { flex: 1; overflow-y: auto; padding: 20px; }
+        
+        .search-wrapper { position: relative; margin-bottom: 24px; }
+        .search-wrapper i { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+        .search-input { width: 100%; background: var(--bg); border: 1px solid var(--border); padding: 14px 14px 14px 40px; border-radius: 10px; color: white; transition: border 0.2s; }
+        .search-input:focus { border-color: var(--brand); }
+
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
+        .stat-box { background: var(--bg); padding: 15px; border-radius: 10px; border: 1px solid var(--border); }
+        .stat-box small { color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; }
+        .stat-box div { font-size: 1.25rem; font-weight: 700; color: var(--brand); }
+
+        .list-header { font-size: 0.85rem; font-weight: 600; color: var(--text-muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+        .location-card { 
+            background: var(--surface-light); border-radius: 14px; padding: 16px; margin-bottom: 12px; 
+            cursor: pointer; border: 1px solid transparent; transition: all 0.2s; position: relative;
+            animation: fadeIn 0.3s ease forwards;
         }
+        .location-card:hover { transform: scale(1.02); border-color: var(--brand); }
+        .location-card h3 { font-size: 1.05rem; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; }
+        .location-card p { font-size: 0.85rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .location-card .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; background: var(--bg); margin-top: 8px; font-weight: 600; }
+        
+        .delete-btn { color: var(--text-muted); font-size: 0.9rem; transition: 0.2s; padding: 5px; }
+        .delete-btn:hover { color: var(--danger); }
 
-        .sidebar-header { padding: 24px; border-bottom: 1px solid var(--border); }
-        .sidebar-header h2 { font-size: 1.5rem; font-weight: 700; }
+        /* MAP AREA */
+        #map-wrapper { position: relative; }
+        #map { height: 100%; width: 100%; }
 
-        .search-container { padding: 16px 24px; }
-        .search-input { 
-            width: 100%; background: #1e293b; border: 1px solid var(--border); 
-            padding: 12px 16px; border-radius: 12px; color: white; outline: none;
+        /* ADD PANEL (MODAL-ISH) */
+        .add-panel {
+            position: absolute; top: 30px; left: 30px; width: 360px;
+            background: var(--glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-radius: 20px; border: 1px solid var(--border); padding: 24px;
+            z-index: 1000; box-shadow: var(--shadow);
+            display: none; animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
-
-        #location-list { flex: 1; overflow-y: auto; padding: 12px 24px; }
-        .place-card {
-            background: var(--border); border-radius: 16px; padding: 16px; margin-bottom: 12px;
-            cursor: pointer; border: 1px solid transparent; transition: 0.2s;
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .add-panel label { display: block; font-size: 0.85rem; margin-bottom: 6px; color: var(--text-muted); }
+        .add-panel input, .add-panel textarea, .add-panel select { 
+            width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--border); 
+            padding: 12px; border-radius: 8px; color: white; margin-bottom: 16px;
         }
-        .place-card:hover { border-color: var(--brand); background: rgba(255,255,255,0.05); }
-        .place-card h3 { font-size: 1rem; margin-bottom: 4px; }
-        .place-card p { font-size: 0.85rem; color: var(--muted); line-height: 1.4; }
+        .image-preview { width: 100%; height: 120px; border-radius: 8px; border: 2px dashed var(--border); margin-bottom: 16px; display: flex; align-items: center; justify-content: center; overflow: hidden; background-size: cover; background-position: center; }
 
-        #map { background: #0f172a; }
+        /* ANIMATIONS */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
 
-        /* Floating Add Action */
-        .add-overlay {
-            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-            z-index: 1000; background: var(--glass); backdrop-filter: blur(12px);
-            padding: 20px; border-radius: 24px; border: 1px solid var(--border);
-            width: 320px; display: none; box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-        }
-
-        .active-app #home-page { transform: translateY(-100%); }
-        .active-app #app-interface { visibility: visible; }
-
-        /* Custom Leaflet Dark/Vibrant */
-        .leaflet-container { background: var(--bg) !important; }
+        /* CUSTOM POPUP */
+        .leaflet-popup-content-wrapper { background: var(--surface); color: var(--text); border-radius: 12px; border: 1px solid var(--border); }
+        .leaflet-popup-tip { background: var(--surface); }
+        
+        /* SCROLLBAR */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--surface-light); border-radius: 10px; }
     </style>
 </head>
 <body>
 
-<section id="home-page">
-    <div class="hero">
-        <h1>Norge.</h1>
-        <p>Oppdag de dypeste fjordene og de høyeste toppene. En profesjonell kartlegger for moderne eventyrere.</p>
-        <div class="cta-group">
-            <button class="btn btn-primary" onclick="launchApp()">Utforsk kartet</button>
-            <button class="btn btn-glass" onclick="launchApp()">Oppgrader</button>
+    <section id="hero-section">
+        <div class="hero-content">
+            <h1>Norge<span style="color:var(--brand);">.</span></h1>
+            <p>Den ultimate plattformen for å loggføre, utforske og planlegge ekspedisjoner i norsk natur.</p>
+            <button class="btn btn-main" onclick="enterApp()">
+                Begynn utforskning <i class="fa-solid fa-arrow-right"></i>
+            </button>
         </div>
-    </div>
-</section>
+    </section>
 
-<main id="app-interface">
-    <aside class="sidebar">
-        <div class="sidebar-header">
-            <h2>Explorer</h2>
-        </div>
-        <div class="search-container">
-            <input type="text" class="search-input" id="search" placeholder="Finn en destinasjon..." oninput="render()">
-        </div>
-        <div id="location-list">
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-nav">
+                <div class="logo"><i class="fa-solid fa-compass"></i> EXPLORER</div>
+                <button class="btn-delete" style="background:none; border:none; cursor:pointer;" onclick="exitApp()">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
             </div>
-    </aside>
 
-    <div id="map"></div>
+            <div class="sidebar-scroll">
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <small>Destinasjoner</small>
+                        <div id="count-dest">0</div>
+                    </div>
+                    <div class="stat-box">
+                        <small>Kategorier</small>
+                        <div id="count-cat">0</div>
+                    </div>
+                </div>
 
-    <div id="add-form" class="add-overlay">
-        <h4 style="margin-bottom: 12px;">Ny destinasjon</h4>
-        <input type="text" id="in-title" class="search-input" placeholder="Navn på sted" style="margin-bottom: 8px;">
-        <textarea id="in-desc" class="search-input" placeholder="Beskrivelse..." style="height: 80px; margin-bottom: 12px;"></textarea>
-        <div style="display: flex; gap: 8px;">
-            <button class="btn btn-primary" style="flex: 1; padding: 10px;" onclick="saveEntry()">Lagre</button>
-            <button class="btn btn-glass" style="flex: 1; padding: 10px;" onclick="closeForm()">Lukk</button>
-        </div>
-        <p id="coord-hint" style="font-size: 11px; color: var(--brand); margin-top: 10px; text-align: center;">Klikk i kartet for posisjon</p>
+                <div class="search-wrapper">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search" class="search-input" placeholder="Søk i dine steder..." oninput="renderAll()">
+                </div>
+
+                <div class="list-header">Dine lagrede steder</div>
+                <div id="location-list">
+                    </div>
+            </div>
+        </aside>
+
+        <main id="map-wrapper">
+            <div id="map"></div>
+
+            <div id="add-panel" class="add-panel">
+                <div class="panel-header">
+                    <h3 style="font-weight: 800;">Lagre destinasjon</h3>
+                    <i class="fa-solid fa-xmark" style="cursor:pointer;" onclick="closePanel()"></i>
+                </div>
+                
+                <div id="image-drop" class="image-preview">
+                    <i class="fa-solid fa-camera fa-2x" style="color:var(--text-muted)"></i>
+                    <input type="file" id="file-input" style="display:none" accept="image/*">
+                </div>
+
+                <label>Navn på destinasjon</label>
+                <input type="text" id="in-name" placeholder="F.eks. Preikestolen">
+
+                <label>Beskrivelse</label>
+                <textarea id="in-desc" rows="3" placeholder="Hva gjør dette stedet unikt?"></textarea>
+
+                <label>Kategori</label>
+                <select id="in-cat">
+                    <option value="Topptur">Topptur</option>
+                    <option value="Fiske">Fiske</option>
+                    <option value="Kultur">Kultur</option>
+                    <option value="Camping">Camping</option>
+                    <option value="Utsikt">Utsikt</option>
+                </select>
+
+                <div id="coord-display" style="font-size: 0.75rem; color: var(--brand); margin-bottom: 20px; font-family: monospace;">
+                    Koordinater: -- , --
+                </div>
+
+                <button class="btn btn-main" style="width:100%; justify-content: center;" onclick="saveEntry()">
+                    Lagre i bibliotek
+                </button>
+            </div>
+        </main>
     </div>
-</main>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-    let map, markers = [], pendingCoord = null;
-    let store = JSON.parse(localStorage.getItem('norge_explorer_v1') || '[]');
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        let map, markers = [], pendingCoord = null, currentImageData = null;
+        let dataStore = JSON.parse(localStorage.getItem('explorer_data_v4')) || [];
 
-    function launchApp() {
-        document.body.classList.add('active-app');
-        setTimeout(initMap, 600);
-    }
+        function enterApp() {
+            document.body.classList.add('app-active');
+            setTimeout(initMap, 800);
+        }
 
-    function initMap() {
-        if(map) return;
-        
-        // High-end Vibrant Map Style (Carto Voyager)
-        map = L.map('map', { zoomControl: false }).setView([62.0, 9.0], 5);
-        
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png', {
-            attribution: 'Explorer'
-        }).addTo(map);
+        function exitApp() {
+            document.body.classList.remove('app-active');
+        }
 
-        L.control.zoom({ position: 'bottomright' }).addTo(map);
+        function initMap() {
+            if (map) return;
+            
+            // Moderne vibrante tiles (Standard OSM med custom filter via CSS hvis ønskelig, men her bruker vi ren Voyager)
+            map = L.map('map', { 
+                zoomControl: false,
+                attributionControl: false 
+            }).setView([62.0, 9.5], 6);
 
-        map.on('click', (e) => {
-            document.getElementById('add-form').style.display = 'block';
-            pendingCoord = e.latlng;
-            document.getElementById('coord-hint').innerText = `📍 Punkt satt: ${e.latlng.lat.toFixed(3)}`;
-        });
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                maxZoom: 19
+            }).addTo(map);
 
-        render();
-    }
+            L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-    function saveEntry() {
-        const title = document.getElementById('in-title').value;
-        const desc = document.getElementById('in-desc').value;
-        if(!title || !pendingCoord) return;
+            // Høyreklikk eller vanlig klikk for å legge til
+            map.on('click', (e) => {
+                openPanel(e.latlng);
+            });
 
-        store.push({
-            id: Date.now(),
-            title, desc,
-            lat: pendingCoord.lat, lng: pendingCoord.lng
-        });
+            renderAll();
+        }
 
-        localStorage.setItem('norge_explorer_v1', JSON.stringify(store));
-        closeForm();
-        render();
-    }
+        function openPanel(latlng) {
+            pendingCoord = latlng;
+            document.getElementById('add-panel').style.display = 'block';
+            document.getElementById('coord-display').innerText = `Koordinater: ${latlng.lat.toFixed(5)}, ${latlng.lng.toFixed(5)}`;
+            document.getElementById('in-name').focus();
+        }
 
-    function closeForm() {
-        document.getElementById('add-form').style.display = 'none';
-        pendingCoord = null;
-    }
+        function closePanel() {
+            document.getElementById('add-panel').style.display = 'none';
+            pendingCoord = null;
+            currentImageData = null;
+            document.getElementById('image-drop').style.backgroundImage = 'none';
+            document.getElementById('image-drop').innerHTML = '<i class="fa-solid fa-camera fa-2x" style="color:var(--text-muted)"></i>';
+        }
 
-    function render() {
-        const list = document.getElementById('location-list');
-        const q = document.getElementById('search').value.toLowerCase();
-        list.innerHTML = '';
-        markers.forEach(m => map.removeLayer(m));
-        markers = [];
+        // Bilde-opplasting logikk (Base64 for LocalStorage demo)
+        document.getElementById('image-drop').onclick = () => document.getElementById('file-input').click();
+        document.getElementById('file-input').onchange = (e) => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = () => {
+                currentImageData = reader.result;
+                document.getElementById('image-drop').innerHTML = '';
+                document.getElementById('image-drop').style.backgroundImage = `url(${currentImageData})`;
+            };
+            if(file) reader.readAsDataURL(file);
+        };
 
-        store.filter(s => s.title.toLowerCase().includes(q)).forEach(s => {
-            // Marker styling
-            const m = L.circleMarker([s.lat, s.lng], {
-                radius: 8, fillOpacity: 1, color: '#fff', weight: 2, fillColor: '#3b82f6'
-            }).addTo(map).bindPopup(`<b>${s.title}</b>`);
-            markers.push(m);
+        function saveEntry() {
+            const name = document.getElementById('in-name').value;
+            const desc = document.getElementById('in-desc').value;
+            const cat = document.getElementById('in-cat').value;
 
-            // Card styling
-            const card = document.createElement('div');
-            card.className = 'place-card';
-            card.innerHTML = `<h3>${s.title}</h3><p>${s.desc}</p>`;
-            card.onclick = () => map.flyTo([s.lat, s.lng], 12);
-            list.appendChild(card);
-        });
-    }
-</script>
+            if(!name || !pendingCoord) return alert("Vennligst fyll ut navn og velg et punkt.");
 
+            const entry = {
+                id: Date.now(),
+                name, desc, cat,
+                lat: pendingCoord.lat,
+                lng: pendingCoord.lng,
+                img: currentImageData
+            };
+
+            dataStore.unshift(entry);
+            sync();
+            
+            // Reset fields
+            document.getElementById('in-name').value = '';
+            document.getElementById('in-desc').value = '';
+            closePanel();
+        }
+
+        function deleteEntry(id, e) {
+            e.stopPropagation();
+            if(!confirm("Slette denne destinasjonen?")) return;
+            dataStore = dataStore.filter(i => i.id !== id);
+            sync();
+        }
+
+        function sync() {
+            localStorage.setItem('explorer_data_v4', JSON.stringify(dataStore));
+            renderAll();
+        }
+
+        function renderAll() {
+            const list = document.getElementById('location-list');
+            const query = document.getElementById('search').value.toLowerCase();
+            const filtered = dataStore.filter(i => i.name.toLowerCase().includes(query) || i.desc.toLowerCase().includes(query));
+
+            list.innerHTML = '';
+            markers.forEach(m => map.removeLayer(m));
+            markers = [];
+
+            // Stats
+            document.getElementById('count-dest').innerText = dataStore.length;
+            document.getElementById('count-cat').innerText = [...new Set(dataStore.map(i => i.cat))].length;
+
+            filtered.forEach(item => {
+                // Marker på kart
+                const icon = L.divIcon({
+                    className: 'custom-div-icon',
+                    html: `<div style="background:${getCatColor(item.cat)}; width:12px; height:12px; border:2px solid white; border-radius:50%; box-shadow: 0 0 10px rgba(0,0,0,0.5);"></div>`,
+                    iconSize: [12, 12],
+                    iconAnchor: [6, 6]
+                });
+
+                const m = L.marker([item.lat, item.lng], { icon }).addTo(map);
+                m.bindPopup(`
+                    <div style="min-width:150px;">
+                        ${item.img ? `<img src="${item.img}" style="width:100%; border-radius:8px; margin-bottom:8px;">` : ''}
+                        <strong style="display:block; font-size:14px;">${item.name}</strong>
+                        <small style="color:#666">${item.cat}</small>
+                    </div>
+                `);
+                markers.push(m);
+
+                // Kort i sidebar
+                const card = document.createElement('div');
+                card.className = 'location-card';
+                card.innerHTML = `
+                    <h3>${item.name} <i class="fa-solid fa-trash-can delete-btn" onclick="deleteEntry(${item.id}, event)"></i></h3>
+                    <p>${item.desc || 'Ingen beskrivelse.'}</p>
+                    <span class="tag" style="color:${getCatColor(item.cat)}">${item.cat}</span>
+                `;
+                card.onclick = () => {
+                    map.flyTo([item.lat, item.lng], 14, { duration: 1.5 });
+                    setTimeout(() => m.openPopup(), 1500);
+                };
+                list.appendChild(card);
+            });
+        }
+
+        function getCatColor(cat) {
+            const colors = {
+                'Topptur': '#818cf8',
+                'Fiske': '#38bdf8',
+                'Kultur': '#fbbf24',
+                'Camping': '#4ade80',
+                'Utsikt': '#f472b6'
+            };
+            return colors[cat] || '#fff';
+        }
+    </script>
 </body>
 </html>
